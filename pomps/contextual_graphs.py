@@ -7,7 +7,7 @@ class ContextualCausalGraph(nx.DiGraph):
 
     def __init__(self, interventional_variables: tp.Set[str] = None,
                  contextual_variables: tp.Set[str] = None, edges=None,
-                 uc_variables: tp.Union[tp.Set[str], str] = None, target='Y'):
+                 uc_variables: tp.Union[tp.Set[str], str] = 'auto', target='Y'):
         self.interventional_variables = interventional_variables
         self.contextual_variables = contextual_variables
         self.target = target
@@ -27,12 +27,14 @@ class ContextualCausalGraph(nx.DiGraph):
                 removable.append(uc)
             if len(confounded) > 2:
                 raise ValueError("Single UC confounds more than two variables consider projecting to multiple UCs")
-        self.shrink_uc_variables(set(removable))
+        self.remove_uc_variables(set(removable))
 
-    def shrink_uc_variables(self, uc_variables: tp.Set[str]):
-        assert uc_variables.issubset(self.uc_variables)
-        self.remove_nodes_from(self.uc_variables - uc_variables)
-        self.uc_variables = self.uc_variables - uc_variables
+    def remove_uc_variables(self, drop: tp.Set[str]):
+        if len(drop) == 0:
+            return
+        assert drop.issubset(self.uc_variables)
+        self.remove_nodes_from(drop)
+        self.uc_variables = self.uc_variables - drop
 
     def parents(self, target: tp.Union[str, tp.Set[str]], include_uc=False):
         if isinstance(target, str):
@@ -52,7 +54,7 @@ class ContextualCausalGraph(nx.DiGraph):
             target = {target}
         copy = ContextualCausalGraph(edges=self, uc_variables=self.uc_variables,
                                      interventional_variables=self.interventional_variables,
-                                     contextual_variables=self.contextual_variables)
+                                     contextual_variables=self.contextual_variables, target=self.target)
         for t in target:
             parents = copy.parents(t, include_uc=True)
             edges = [(p, t) for p in parents]
@@ -65,7 +67,7 @@ class ContextualCausalGraph(nx.DiGraph):
             target = {target}
         copy = ContextualCausalGraph(edges=self, uc_variables=self.uc_variables,
                                      interventional_variables=self.interventional_variables,
-                                     contextual_variables=self.contextual_variables)
+                                     contextual_variables=self.contextual_variables, target=self.target)
         for t in target:
             children = copy.children(t)
             edges = [(t, c) for c in children]

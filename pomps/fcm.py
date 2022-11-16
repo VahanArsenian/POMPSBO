@@ -35,7 +35,8 @@ class FunctionalCausalModel:
         self.prob_over_exogenous = sampler_over_exogenous
 
         assert set(sampler_over_exogenous().keys()) == self.exogenous,\
-            "Invalid probability measure over exogenous"
+            f"Invalid probability measure over exogenous: " \
+            f"vars are: {self.exogenous}, sampler gives: {set(sampler_over_exogenous().keys())}"
 
     def induced_graph(self):
         puc_counter = {ex: [] for ex in self.exogenous}
@@ -56,7 +57,7 @@ class FunctionalCausalModel:
             projected_uc = f"U{idx}"
             uc_s += [projected_uc]
             edges += [(projected_uc, bi_dir_edge[0]), (projected_uc, bi_dir_edge[1])]
-        return ContextualCausalGraph(edges, set(uc_s))
+        return ContextualCausalGraph(edges=edges, uc_variables=set(uc_s))
 
     def is_acyclic(self):
         return is_directed_acyclic_graph(self.induced_graph())

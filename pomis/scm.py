@@ -4,7 +4,7 @@ import enum
 
 import pyro
 import typing as tp
-from graphs import NonManGraph, CausalGraph
+from pomis.graphs import NonManGraph, CausalGraph
 
 
 @dataclasses.dataclass
@@ -30,6 +30,8 @@ class Domain:
     def decode(self, value):
         pass
 
+    def __hash__(self):
+        return hash(self.name)
 
 @dataclasses.dataclass
 class RealDomain(Domain):

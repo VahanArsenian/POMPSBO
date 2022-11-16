@@ -1,3 +1,4 @@
+import copy
 import typing as tp
 from pomps.utils import union
 
@@ -12,7 +13,7 @@ class PolicyComponent:
         return set([(context, self.target) for context in self.context])
 
     def __hash__(self):
-        return self.target
+        return hash(self.target)
 
     def __eq__(self, other: "PolicyComponent"):
         if self.target == other.target and self.context == other.context:
@@ -25,6 +26,9 @@ class PolicyComponent:
             return True
         else:
             return False
+
+    def __repr__(self):
+        return f"<{self.target}, {self.context}>"
 
 
 class MixedPolicyScope:
@@ -42,4 +46,24 @@ class MixedPolicyScope:
 
     @property
     def pairs(self):
+        if len(self.components) == 0:
+            return set()
         return union([component.to_pairs() for component in self.components.values()])
+
+    def __repr__(self):
+        return "\t".join([v.__repr__() for v in self.components.values()])
+
+    def implied(self, variables: tp.Set[str]):
+        print(variables)
+        result = copy.copy(variables)
+        future_result = copy.copy(variables)
+        should_repeat = True
+        print('call')
+        while should_repeat:
+            for target, component in self.components.items():
+                if component.context.issubset(future_result):
+                    future_result = future_result | {target}
+                    print(future_result, result)
+            should_repeat = future_result != result
+            result = future_result
+        return result
