@@ -80,7 +80,7 @@ class MPSReductor:
                                  {component.target} - descendants(mutilated_graph, component.target)
             h_x = mutilated_graph.subgraph(set(mutilated_graph.nodes) - {component.target})
             for c in potential_addition:
-                improves = d_separated(h_x, {c}, {mutilated_graph.target},
+                improves = not d_separated(h_x, {c}, {mutilated_graph.target},
                                        set(h_x.nodes) & mps.implied(component.context))
                 if improves:
                     return True
