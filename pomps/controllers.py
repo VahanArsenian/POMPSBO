@@ -1,3 +1,5 @@
+import itertools
+
 from pomps.policy_scope import MixedPolicyScope, PolicyComponent
 from pomps.contextual_graphs import ContextualCausalGraph
 from networkx import is_directed_acyclic_graph, descendants, ancestors, d_separated
@@ -48,6 +50,31 @@ class PolicyFCM:
     def mps_to_gp_policy(cls, mps: MixedPolicyScope, factory: GPFunctorFactory):
         return {factory.construct(pc.target, pc.context)
                 for pc in mps.components.values()}
+
+
+class MPSGenerator:
+    @classmethod
+    def all_combs(cls, base: tp.Collection[str], start=0):
+        return list(itertools.chain(*[itertools.combinations(base, i) for i in range(start, len(base) + 1)]))
+
+    @classmethod
+    def inter_cont_pair_gen(cls, interventional_set: tp.Set, contextual_set: tp.Set):
+        inter_segment = []
+        context_space = cls.all_combs(contextual_set)
+        for inter in interventional_set:
+            inter_segment += [[(inter, i) for i in context_space]]
+
+        iam = cls.all_combs(inter_segment)
+        return itertools.chain(*[(itertools.product(*iam[i])) for i in range(len(iam))], [])
+
+    @classmethod
+    def mps_gen(cls, pair_gen):
+        for mps_row in pair_gen:
+            yield MixedPolicyScope({PolicyComponent(target, set(context)) for target, context in mps_row})
+
+    @classmethod
+    def mps_for(cls, interventional_set: tp.Set, contextual_set: tp.Set):
+        return cls.mps_gen(cls.inter_cont_pair_gen(interventional_set, contextual_set))
 
 
 class MPSReductor:
