@@ -1,5 +1,7 @@
 import itertools
 
+import networkx as nx
+
 from pomps.policy_scope import MixedPolicyScope, PolicyComponent
 from pomps.contextual_graphs import ContextualCausalGraph
 from networkx import is_directed_acyclic_graph, descendants, ancestors, d_separated
@@ -108,7 +110,40 @@ class MPSReductor:
             h_x = mutilated_graph.subgraph(set(mutilated_graph.nodes) - {component.target})
             for c in potential_addition:
                 improves = not d_separated(h_x, {c}, {mutilated_graph.target},
-                                       set(h_x.nodes) & mps.implied(component.context))
+                                           set(h_x.nodes) & mps.implied(component.context))
                 if improves:
                     return True
+        return False
+
+
+class MPSDominance:
+
+    @classmethod
+    def is_valid_comparison(cls, scope_1: MixedPolicyScope, scope_2: MixedPolicyScope):
+        if scope_1 == scope_2:
+            return False
+        return scope_1.interventional_variables.issubset(scope_2.interventional_variables)
+
+    @classmethod
+    def is_jointly_acyclic(cls, induced_graph_1: ContextualCausalGraph, induced_graph2: ContextualCausalGraph):
+        joint_graph = nx.compose(induced_graph_1, induced_graph2)
+        if is_directed_acyclic_graph(joint_graph):
+            return joint_graph
+        return False
+
+    @classmethod
+    def disagreement(cls, scope_1: MixedPolicyScope, scope_2: MixedPolicyScope):
+        diff = scope_2.interventional_variables - scope_1.interventional_variables
+        addition = []
+        for interventional_var in scope_1.interventional_variables:
+            if scope_1.components[interventional_var].context != scope_2.components[interventional_var].context:
+                addition.append(interventional_var)
+        return diff | set(addition)
+
+    @classmethod
+    def does_dominate(cls, scope_1: MixedPolicyScope, induced_graph_1: ContextualCausalGraph,
+                      scope_2: MixedPolicyScope, induced_graph_2: ContextualCausalGraph):
+        if cls.is_valid_comparison(scope_1, scope_2):
+            if cls.is_jointly_acyclic(induced_graph_1, induced_graph_2):
+                disagreement = cls.disagreement(scope_1, scope_2)
         return False

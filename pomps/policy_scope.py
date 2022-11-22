@@ -44,6 +44,16 @@ class MixedPolicyScope:
     def contextual_variables(self):
         return union([c.context for c in self.components.values()])
 
+    def __eq__(self, other: "MixedPolicyScope"):
+        if other.interventional_variables != self.interventional_variables:
+            return False
+        for component in self.components:
+            self_component = self.components[component]
+            other_component = other.components[component]
+            if self_component.context != other_component.context:
+                return False
+        return True
+
     @property
     def pairs(self):
         if len(self.components) == 0:
