@@ -126,6 +126,7 @@ class MPSDominance:
 
     @classmethod
     def is_jointly_acyclic(cls, induced_graph_1: ContextualCausalGraph, induced_graph2: ContextualCausalGraph):
+        #TODO: test compose on side effects
         joint_graph = nx.compose(induced_graph_1, induced_graph2)
         if is_directed_acyclic_graph(joint_graph):
             return joint_graph
@@ -144,6 +145,21 @@ class MPSDominance:
     def does_dominate(cls, scope_1: MixedPolicyScope, induced_graph_1: ContextualCausalGraph,
                       scope_2: MixedPolicyScope, induced_graph_2: ContextualCausalGraph):
         if cls.is_valid_comparison(scope_1, scope_2):
-            if cls.is_jointly_acyclic(induced_graph_1, induced_graph_2):
+            joint = cls.is_jointly_acyclic(induced_graph_1, induced_graph_2)
+            if joint:
+                joint: nx.DiGraph = joint
                 disagreement = cls.disagreement(scope_1, scope_2)
+                invalid_components = []
+                for disagreed_var in disagreement:
+                    invalid_context = set(joint.predecessors(disagreed_var))
+                    invalid_components.append(PolicyComponent(disagreed_var, invalid_context))
+                invalid_mps = MixedPolicyScope(set(invalid_components))
+                return MPSEquivalence.is_equivalent(scope_2, invalid_mps)
         return False
+
+
+class MPSEquivalence:
+
+    @classmethod
+    def is_equivalent(cls, scope_1: MixedPolicyScope, scope_2: MixedPolicyScope):
+        return True

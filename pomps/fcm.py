@@ -34,11 +34,12 @@ class FunctionalCausalModel:
         self.exogenous = union([f.arguments for f in self.functors.values()]) - self.endogenous
         self.prob_over_exogenous = sampler_over_exogenous
 
-        assert set(sampler_over_exogenous().keys()) == self.exogenous,\
+        assert set(sampler_over_exogenous().keys()) == self.exogenous, \
             f"Invalid probability measure over exogenous: " \
             f"vars are: {self.exogenous}, sampler gives: {set(sampler_over_exogenous().keys())}"
 
     def induced_graph(self):
+        # TODO: Cache the induced graph
         puc_counter = {ex: [] for ex in self.exogenous}
         edges = []
         uc_s = []
@@ -64,6 +65,7 @@ class FunctionalCausalModel:
 
     def sample(self, return_exog=False):
         sorted_nodes = self.induced_graph().topological_order()
+        # TODO: MB cache the order
         exogenous = self.prob_over_exogenous()
         observed = {}
         for n in sorted_nodes:
