@@ -74,7 +74,15 @@ class ContextualCausalGraph(nx.DiGraph):
             copy.remove_edges_from(edges)
         return copy
 
-    def topological_order(self, include_uc=False):
+    def topological_order(self, prioritize: tp.Set[str] = None, include_uc=False):
+
+        def reschedule(el):
+            return list(set(el) & prioritize) + list(set(el) - prioritize)
+
         if include_uc:
             raise NotImplementedError
-        return [n for n in nx.topological_sort(self) if n not in self.uc_variables]
+        if prioritize is None:
+            return [n for n in nx.topological_sort(self) if n not in self.uc_variables]
+        else:
+            return [n for n in sum((map(reschedule, nx.topological_generations(self))), [])
+                    if n not in self.uc_variables]

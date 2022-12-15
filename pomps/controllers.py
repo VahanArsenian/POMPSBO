@@ -53,6 +53,12 @@ class PolicyFCM:
         return {factory.construct(pc.target, pc.context)
                 for pc in mps.components.values()}
 
+    @classmethod
+    def mps_to_single_gp(cls, mps: MixedPolicyScope, factory: GPFunctorFactory):
+        iv = list(mps.interventional_variables)
+        cv = mps.contextual_variables
+        return set(factory.construct_shared(iv, cv))
+
 
 class MPSGenerator:
     @classmethod
