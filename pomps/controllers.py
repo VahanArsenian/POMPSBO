@@ -55,8 +55,9 @@ class PolicyFCM:
 
     @classmethod
     def mps_to_single_gp(cls, mps: MixedPolicyScope, factory: GPFunctorFactory):
-        iv = list(mps.interventional_variables)
-        cv = mps.contextual_variables
+        linear_policy = [(cp.target, cp.context)for cp in mps.components.values()]
+        iv = [lp[0] for lp in linear_policy]
+        cv = [lp[1] for lp in linear_policy]
         return set(factory.construct_shared(iv, cv))
 
 

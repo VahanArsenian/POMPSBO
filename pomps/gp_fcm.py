@@ -52,13 +52,19 @@ class SFBuffer:
 
 
 class SharedFunctor(GPFunctor):
-    def __init__(self, functional: GPFunctional, variable, sfb: SFBuffer = None):
+    def __init__(self, functional: GPFunctional, variable, arguments: tp.Set[str], sfb: SFBuffer = None):
         super().__init__(functional, variable)
+        self.hyper_space = self.arguments
+        self.arguments = arguments
         self.sf = sfb
 
     def __call__(self, payload: tp.Dict[str, tp.Any]):
+        print("buffer", self.sf.buffer)
         if len(self.sf.buffer) == 0:
-            self.sf.buffer = super(GPFunctor, self).__call__(payload)
+            assert set(payload.keys()).issuperset(self.arguments), "Signature mismatch"
+            active_payload = {k: v for k, v in payload.items() if k in self.arguments}
+            print(active_payload, payload, self.hyper_space, self.arguments, self.variable)
+            self.sf.buffer = self.functional(**active_payload)
         return self.sf.buffer.pop(self.variable)
 
 
@@ -78,13 +84,13 @@ class GPFunctorFactory:
         functional = GPFunctional(AdHEBO(ds))
         return GPFunctor(functional, variable)
 
-    def construct_shared(self, variables: tp.List[str], contexts: tp.Set[str]) -> tp.List[GPFunctor]:
+    def construct_shared(self, variables: tp.List[str], arguments: tp.List[tp.Set[str]]) -> tp.List[GPFunctor]:
         buffer = SFBuffer()
-
-        domain = self.get_domain_for(set(variables) | contexts)
+        print(arguments)
+        domain = self.get_domain_for(set(variables) | union(arguments))
         hebo_space = [d.to_hebo() for d in domain]
         ds = DesignSpace().parse(hebo_space)
         hebo = GPFunctional(AdHEBO(ds))
-        functional = [SharedFunctor(hebo, v) for v in variables]
+        functional = [SharedFunctor(hebo, v, c) for v, c in zip(variables, arguments)]
         [buffer.register(f) for f in functional]
         return functional
