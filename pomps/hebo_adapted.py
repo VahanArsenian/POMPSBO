@@ -66,6 +66,7 @@ class AdHEBO(HEBO):
             sig = Sigma(model, linear_a=-1.)
             opt = EvolutionOpt(self.space, acq, pop=100, iters=100, verbose=False, es=self.es)
             rec = opt.optimize(initial_suggest=best_x, fix_input=fix_input).drop_duplicates()
+            print(opt.res.F)
             rec = rec[self.check_unique(rec)]
 
             cnt = 0
