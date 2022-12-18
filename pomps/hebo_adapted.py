@@ -1,5 +1,7 @@
 from hebo.optimizers.hebo import HEBO, MACE, Mean, Sigma, power_transform, get_model, EvolutionOpt
+from hebo.acquisitions.acq import EI, LCB
 import torch
+import pandas as pd
 import numpy as np
 
 
@@ -16,7 +18,7 @@ class AdHEBO(HEBO):
             raise RuntimeError('Parallel optimization is supported only for MACE acquisition')
         if self.X.shape[0] < self.rand_sample:
             sample = self.quasi_sample(n_suggestions, fix_input)
-            return sample
+            return sample, None
         else:
             X, Xe = self.space.transform(self.X)
             try:
@@ -65,9 +67,12 @@ class AdHEBO(HEBO):
             mu = Mean(model)
             sig = Sigma(model, linear_a=-1.)
             opt = EvolutionOpt(self.space, acq, pop=100, iters=100, verbose=False, es=self.es)
-            rec = opt.optimize(initial_suggest=best_x, fix_input=fix_input).drop_duplicates()
-            print(opt.res.F)
+            rec = opt.optimize(initial_suggest=best_x, fix_input=fix_input)
+            acq_col_name = "__AC_VAL"
+            assert len(rec) == len(opt.res.F)
+            rec['__AC_VAL'] = list(map(list, opt.res.F))
             rec = rec[self.check_unique(rec)]
+            rec.drop_duplicates(subset=set(rec.columns) - {acq_col_name})
 
             cnt = 0
             while rec.shape[0] < n_suggestions:
@@ -84,6 +89,8 @@ class AdHEBO(HEBO):
 
             select_id = np.random.choice(rec.shape[0], n_suggestions, replace=False).tolist()
             x_guess = []
+            acq_vals = rec[acq_col_name].to_list()
+            rec = rec.drop(columns=[acq_col_name])
             with torch.no_grad():
                 py_all = mu(*self.space.transform(rec)).squeeze().numpy()
                 ps_all = -1 * sig(*self.space.transform(rec)).squeeze().numpy()
@@ -94,7 +101,8 @@ class AdHEBO(HEBO):
                 if best_pred_id not in select_id and n_suggestions > 2:
                     select_id[1] = best_pred_id
                 rec_selected = rec.iloc[select_id].copy()
-            return rec_selected
+                acq_opt = -np.array(acq_vals)[select_id]
+            return rec_selected, acq_opt
 
     def observe(self, X, y):
         """Feed an observation back.
@@ -114,3 +122,7 @@ class AdHEBO(HEBO):
         self.X = self.X.append(XX, ignore_index=True)
         self.y = np.vstack([self.y, yy])
         self.__model = None
+
+    def check_unique(self, rec: pd.DataFrame, acq_col="__AC_VAL") -> [bool]:
+        return (~pd.concat([self.X, rec], axis=0).duplicated(subset=set(rec.columns) - {acq_col}).tail(
+            rec.shape[0]).values).tolist()

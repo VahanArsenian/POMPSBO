@@ -1,3 +1,5 @@
+import numpy as np
+
 from pomps.hebo_adapted import AdHEBO, HEBO
 import pandas as pd
 import typing as tp
@@ -13,10 +15,12 @@ class GPFunctional:
     def __init__(self, optimizer: HEBO):
         self.optimizer = optimizer
         self.__x: pd.DataFrame = None
+        self.acq_vals = None
 
     def __call__(self, **kwargs):
-        suggested: pd.DataFrame = self.optimizer.suggest(1, fix_input=kwargs)
+        suggested, acq_vals = self.optimizer.suggest(1, fix_input=kwargs)
         self.__x = suggested
+        self.acq_vals = acq_vals
         result: tp.Dict = suggested.to_dict(orient="records")[0]
         for k in kwargs:
             del result[k]
@@ -25,6 +29,7 @@ class GPFunctional:
     def observe(self, target):
         self.optimizer.observe(self.__x, target)
         self.__x = None
+        self.acq_vals = None
 
     def suggest(self):
         pass
