@@ -15,7 +15,6 @@ class GPFunctional:
     def __init__(self, optimizer: HEBO):
         self.optimizer = optimizer
         self.__x: pd.DataFrame = None
-        self.acq_vals = None
 
     def __call__(self, **kwargs):
         suggested, acq_vals = self.optimizer.suggest(1, fix_input=kwargs)
@@ -24,12 +23,11 @@ class GPFunctional:
         result: tp.Dict = suggested.to_dict(orient="records")[0]
         for k in kwargs:
             del result[k]
-        return result
+        return result, acq_vals
 
     def observe(self, target):
         self.optimizer.observe(self.__x, target)
         self.__x = None
-        self.acq_vals = None
 
     def suggest(self):
         pass
@@ -41,9 +39,10 @@ class GPFunctor(Functor):
         self.variable = variable
         self.functional = functional
         self.arguments = set(functional.optimizer.space.para_names) - {self.variable}
+        self.acq_vals = None
 
     def __call__(self, payload: tp.Dict[str, tp.Any]):
-        result = super(GPFunctor, self).__call__(payload)
+        result, self.acq_vals = super(GPFunctor, self).__call__(payload)
         return torch.tensor(list(result.values())[0])
 
 
@@ -62,6 +61,7 @@ class SharedFunctor(GPFunctor):
         self.hyper_space = self.arguments
         self.arguments = arguments
         self.sf = sfb
+        self.acq_vals = None
 
     def __call__(self, payload: tp.Dict[str, tp.Any]):
         print("buffer", self.sf.buffer)
@@ -69,7 +69,7 @@ class SharedFunctor(GPFunctor):
             assert set(payload.keys()).issuperset(self.arguments), "Signature mismatch"
             active_payload = {k: v for k, v in payload.items() if k in self.arguments}
             print(active_payload, payload, self.hyper_space, self.arguments, self.variable)
-            self.sf.buffer = self.functional(**active_payload)
+            self.sf.buffer, self.acq_vals = self.functional(**active_payload)
         return self.sf.buffer.pop(self.variable)
 
 
