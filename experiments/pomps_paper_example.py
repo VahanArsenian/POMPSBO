@@ -1,6 +1,9 @@
 import logging
+import sys
+from pathlib import Path
 
 logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s')
+sys.path.append(str(Path(__file__).parent.parent))
 import datetime
 import pyro
 import torch
