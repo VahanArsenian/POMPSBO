@@ -9,6 +9,7 @@ import torch
 import typing as tp
 from collections import defaultdict
 from uuid import uuid4
+from tqdm.auto import tqdm
 from pathlib import Path
 import pickle
 
@@ -130,7 +131,7 @@ class POMPSExperiment(Experiment):
         self.log_results(smp, mps)
 
     def iterate(self):
-        for i in range(self.n_iter):
+        for i in tqdm(range(self.n_iter)):
             self.step()
 
     def save_results(self, start, end, prefix="", additional_meta_data: dict = None):
