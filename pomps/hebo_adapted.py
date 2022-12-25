@@ -33,7 +33,7 @@ class AdHEBO(HEBO):
                 if self.__model is None:
                     model = get_model(self.model_name, self.space.num_numeric, self.space.num_categorical, 1,
                                       **self.model_config)
-                    print("fitting GP")
+                    # print("fitting GP")
                     model.fit(X, Xe, y)
                     self.__model = model
                 else:
@@ -43,7 +43,7 @@ class AdHEBO(HEBO):
                 if self.__model is None:
                     model = get_model(self.model_name, self.space.num_numeric, self.space.num_categorical, 1,
                                       **self.model_config)
-                    print("fitting GP")
+                    # print("fitting GP")
                     model.fit(X, Xe, y)
                     self.__model = model
                 else:

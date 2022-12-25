@@ -64,11 +64,11 @@ class SharedFunctor(GPFunctor):
         self.acq_vals = None
 
     def __call__(self, payload: tp.Dict[str, tp.Any]):
-        print("buffer", self.sf.buffer)
+        # print("buffer", self.sf.buffer)
         if len(self.sf.buffer) == 0:
             assert set(payload.keys()).issuperset(self.arguments), "Signature mismatch"
             active_payload = {k: v for k, v in payload.items() if k in self.arguments}
-            print(active_payload, payload, self.hyper_space, self.arguments, self.variable)
+            # print(active_payload, payload, self.hyper_space, self.arguments, self.variable)
             self.sf.buffer, self.acq_vals = self.functional(**active_payload)
         return self.sf.buffer.pop(self.variable)
 
@@ -91,7 +91,7 @@ class GPFunctorFactory:
 
     def construct_shared(self, variables: tp.List[str], arguments: tp.List[tp.Set[str]]) -> tp.List[GPFunctor]:
         buffer = SFBuffer()
-        print(arguments)
+        # print(arguments)
         domain = self.get_domain_for(set(variables) | union(arguments))
         hebo_space = [d.to_hebo() for d in domain]
         ds = DesignSpace().parse(hebo_space)

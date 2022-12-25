@@ -64,16 +64,16 @@ class MixedPolicyScope:
         return "\t".join([v.__repr__() for v in self.components.values()])
 
     def implied(self, variables: tp.Set[str]):
-        print(variables)
+        # print(variables)
         result = copy.copy(variables)
         future_result = copy.copy(variables)
         should_repeat = True
-        print('call')
+        # print('call')
         while should_repeat:
             for target, component in self.components.items():
                 if component.context.issubset(future_result):
                     future_result = future_result | {target}
-                    print(future_result, result)
+                    # print(future_result, result)
             should_repeat = future_result != result
             result = future_result
         return result

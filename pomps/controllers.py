@@ -7,6 +7,7 @@ from pomps.contextual_graphs import ContextualCausalGraph
 from networkx import is_directed_acyclic_graph, descendants, ancestors, d_separated
 from pomps.fcm import Functor, FunctionalCausalModel
 import typing as tp
+from pomps.utils import inter_cont_pair_gen
 from pomps.gp_fcm import GPFunctorFactory
 
 
@@ -170,3 +171,23 @@ class MPSEquivalence:
     @classmethod
     def is_equivalent(cls, scope_1: MixedPolicyScope, scope_2: MixedPolicyScope):
         return True
+
+
+def mpss(pair_gen):
+    for mps_row in pair_gen:
+        yield MixedPolicyScope({PolicyComponent(target, set(context)) for target, context in mps_row})
+
+
+def get_pomps_for(ccg: ContextualCausalGraph) -> tp.List[tp.Tuple[ContextualCausalGraph, MixedPolicyScope]]:
+    interventional_set = ccg.interventional_variables
+    contextual_set = ccg.contextual_variables
+    mps_cmp = list(mpss(inter_cont_pair_gen(interventional_set, contextual_set)))
+    graph_under_mps = [(MPSDAGController.graph_under_mps(mps, ccg), mps) for mps in mps_cmp]
+
+    graph_under_mps = [(g[0][0], g[1]) for g in graph_under_mps if g[0][1]]
+
+    graph_under_mps = [g for g in graph_under_mps if
+                       MPSReductor.action_relevance_check(g[1], g[0]) and MPSReductor.context_relevance_check(g[1],
+                                                                                                              g[0])]
+    graph_under_mps = [g for g in graph_under_mps if not MPSReductor.sufficiently_not_pomp(g[1], g[0])]
+    return graph_under_mps
