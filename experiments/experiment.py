@@ -13,8 +13,8 @@ from tqdm.auto import tqdm
 from pathlib import Path
 import pickle
 
-
-logger = logging
+logger = logging.getLogger("pomps_logger")
+logger
 
 
 class Experiment(ABC):
@@ -91,16 +91,16 @@ class POMPSExperiment(Experiment):
     def __choose_trial(self):
         if np.random.uniform(0, 1) < self.epsilon:
             trial_id = np.random.choice(list(self.pomps_active.keys()))
-            print(f"Choosing randomly {trial_id}")
+            logger.debug(f"Choosing randomly {trial_id}")
             return trial_id
         trial_index = None
         try:
             trial_index = [idx for idx, (f, p, _) in (self.pomps_active.items()) if p.acq_vals is None][0]
-            print(f"None detected in acquisition function. Choosing {trial_index}")
+            logger.info(f"None detected in acquisition function. Choosing {trial_index}")
         except IndexError as _:
             fold = np.row_stack([p.acq_vals for f, p, _ in self.pomps_active.values()])
             optimal = pareto_optimal(fold)
-            print(f"Optimal indexes {optimal}")
+            logger.debug(f"Optimal indexes {optimal}")
             trial_index = np.random.choice(optimal)
         return trial_index
 
@@ -114,11 +114,11 @@ class POMPSExperiment(Experiment):
 
         fcm_m, policy, mps = self.pomps_active[trial_id]
         if self.is_single_gp:
-            print(f"Policy for {policy.variable}, {policy.arguments}")
+            logger.debug(f"Policy for {policy.variable}, {policy.arguments}")
 
-        print(f"Trial index {trial_id}")
+        logger.debug(f"Trial index {trial_id}")
         smp = fcm_m.sample(necessary_context=policy.arguments)
-        print(f"Sample is {smp}")
+        logger.debug(f"Sample is {smp}")
 
         y = smp[self.ccg.target]
         y = torch.tensor([y])
