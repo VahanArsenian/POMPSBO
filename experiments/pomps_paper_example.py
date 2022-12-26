@@ -1,47 +1,7 @@
-import logging
 import sys
 from pathlib import Path
-
 sys.path.append(str(Path(__file__).parent.parent))
-
-import argparse
-
-parser = argparse.ArgumentParser(description='Arguments for POMPS example graph')
-parser.add_argument('--smoke', action='store_true', help='Used to test the code')
-parser.add_argument('--no-smoke', dest='smoke', action='store_false')
-parser.set_defaults(smoke=True)
-parser.add_argument('--n_iter', type=int, help='Number of iterations to be run', default=1500)
-parser.add_argument('--seed', type=int, help='Seed for torch, python, and numpy', default=42)
-parser.add_argument('--log_file', type=str, help='Log file path',
-                    default="pomps_paper_graph0.log")
-parser.add_argument('--experiment_name', type=str, help='Experiment name. Used to define artefact names',
-                    default="pomps_paper_graph0")
-
-args = vars(parser.parse_args())
-print(args)
-smoke_test = args['smoke']
-n_iter = args['n_iter']
-seed = args['seed']
-log_file = args['log_file']
-experiment_name = args["experiment_name"]
-
-
-logger = logging.getLogger('pomps_logger')
-logger.setLevel(logging.DEBUG)
-# create file handler which logs even debug messages
-fh = logging.FileHandler(log_file)
-fh.setLevel(logging.DEBUG)
-# create console handler with a higher log level
-ch = logging.StreamHandler()
-ch.setLevel(logging.ERROR)
-# create formatter and add it to the handlers
-formatter = logging.Formatter('%(process)d-%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-ch.setFormatter(formatter)
-fh.setFormatter(formatter)
-# add the handlers to logger
-logger.addHandler(ch)
-logger.addHandler(fh)
-
+from experiments.utils import *
 import datetime
 import pyro
 import torch
@@ -66,10 +26,10 @@ def sampler_over():
 fcm = FunctionalCausalModel({Functor(lambda U1: pyro.sample("C", dist.Normal(U1, 0.1)), 'C'),
                              Functor(lambda C, U1: pyro.sample("X1", dist.Normal(U1 + C, 0.1)), 'X1'),
                              Functor(
-                                 lambda C, X1, U2: pyro.sample("X2", dist.Normal(C + X1 + torch.abs(U2) * 0.3, 0.1)),
+                                 lambda C, X1, U2: pyro.sample("X2", dist.Normal(torch.abs(C - X1)+0.2, 0.1)),
                                  'X2'),
                              Functor(lambda U2, X2, C: pyro.sample("Y",
-                                                                   dist.Normal(torch.cos(C - X2) + U2 / 100, 0.01)),
+                                                                   dist.Normal(torch.cos(C - X2) + U2 / 100, 0.001)),
                                      "Y")}, sampler_over)
 
 domain = [RealDomain("X1", -2, 2), RealDomain("X2", -2, 2), RealDomain("C", -2, 2)]

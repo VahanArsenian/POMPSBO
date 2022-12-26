@@ -14,7 +14,6 @@ from pathlib import Path
 import pickle
 
 logger = logging.getLogger("pomps_logger")
-logger
 
 
 class Experiment(ABC):
