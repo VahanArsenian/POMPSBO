@@ -44,6 +44,16 @@ class MixedPolicyScope:
     def contextual_variables(self):
         return union([c.context for c in self.components.values()])
 
+    def __eq__(self, other: "MixedPolicyScope"):
+        if other.interventional_variables != self.interventional_variables:
+            return False
+        for component in self.components:
+            self_component = self.components[component]
+            other_component = other.components[component]
+            if self_component.context != other_component.context:
+                return False
+        return True
+
     @property
     def pairs(self):
         if len(self.components) == 0:
@@ -54,16 +64,16 @@ class MixedPolicyScope:
         return "\t".join([v.__repr__() for v in self.components.values()])
 
     def implied(self, variables: tp.Set[str]):
-        print(variables)
+        # print(variables)
         result = copy.copy(variables)
         future_result = copy.copy(variables)
         should_repeat = True
-        print('call')
+        # print('call')
         while should_repeat:
             for target, component in self.components.items():
                 if component.context.issubset(future_result):
                     future_result = future_result | {target}
-                    print(future_result, result)
+                    # print(future_result, result)
             should_repeat = future_result != result
             result = future_result
         return result
