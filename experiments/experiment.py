@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from pomps.fcm import FunctionalCausalModel, ContextualCausalGraph
-from pomps.controllers import GPFunctorFactory, MixedPolicyScope, get_pomps_for, PolicyFCM
+from pomps.controllers import GPFunctorFactory, MixedPolicyScope, get_mps_for, PolicyFCM, MPSDAGController
 from pomis.scm import Domain
 from pomps.utils import pareto_optimal, union
 import numpy as np
@@ -62,7 +62,8 @@ class POMPSExperiment(Experiment):
         assert {s.name for s in optimization_domain}.issuperset(interventional_variables), \
             "Interventional optimization domain is incomplete"
         self.factory = GPFunctorFactory(optimization_domain)
-        self.graphs_under_mps = get_pomps_for(self.ccg)
+        simplified = MPSDAGController.simplify(self.ccg)
+        self.graphs_under_mps = get_mps_for(simplified)
 
     def __drop_undetected(self, droppable_scopes):
         droppable_scopes = {} if droppable_scopes is None else droppable_scopes
@@ -105,7 +106,9 @@ class POMPSExperiment(Experiment):
 
     def log_results(self, sample: dict, mps: MixedPolicyScope):
         for k, v in sample.items():
-            self.__results_store['k'].append(v)
+            if type(v) is torch.Tensor:
+                v = v.item()
+            self.__results_store[k].append(v)
         self.__results_store['MPS'].append(str(mps))
 
     def step(self):
