@@ -169,16 +169,39 @@ class MPSDominance:
 class MPSEquivalence:
 
     @classmethod
-    def is_equivalent(cls, scope_1: MixedPolicyScope, scope_2: MixedPolicyScope):
-        return True
+    def is_equivalent(cls, scope_1: MixedPolicyScope, scope_2: MixedPolicyScope) -> bool:
+        if scope_1.interventional_variables == scope_2.interventional_variables:
+            if scope_1.contextual_variables.issubset(scope_2.contextual_variables):
+                larger_scope = scope_2
+                smaller_scope = scope_1
+            elif scope_1.contextual_variables.issuperset(scope_2.contextual_variables):
+                larger_scope = scope_1
+                smaller_scope = scope_2
+            else:
+                return False
+            Z = larger_scope.contextual_variables - smaller_scope.contextual_variables
 
+        else:
+            return False
+
+    @classmethod
+    def fixed(cls, variables_set: tp.Set[str], large_mps: MixedPolicyScope) -> tp.Set[str]:
+        t_hat = cls.deterministic_extended_context(variables_set)
+        if variables_set == t_hat:
+            return variables_set
+        else:
+            return cls.fixed(t_hat)
+
+    @classmethod
+    def deterministic_extended_context(cls, variables_set: tp.Set[str]) -> tp.Set[str]:
+        return variables_set
 
 def mpss(pair_gen):
     for mps_row in pair_gen:
         yield MixedPolicyScope({PolicyComponent(target, set(context)) for target, context in mps_row})
 
 
-def get_pomps_for(ccg: ContextualCausalGraph) -> tp.List[tp.Tuple[ContextualCausalGraph, MixedPolicyScope]]:
+def get_mps_for(ccg: ContextualCausalGraph) -> tp.List[tp.Tuple[ContextualCausalGraph, MixedPolicyScope]]:
     interventional_set = ccg.interventional_variables
     contextual_set = ccg.contextual_variables
     mps_cmp = list(mpss(inter_cont_pair_gen(interventional_set, contextual_set)))
