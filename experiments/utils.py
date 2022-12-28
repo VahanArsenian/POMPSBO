@@ -1,8 +1,6 @@
 import logging
-
-
-
 import argparse
+
 
 parser = argparse.ArgumentParser(description='Arguments for POMPS example graph')
 parser.add_argument('--smoke', action='store_true', help='Used to test the code')
