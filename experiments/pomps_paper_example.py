@@ -42,5 +42,5 @@ exp.iterate()
 end = datetime.datetime.now()
 
 if not smoke_test:
-    exp.save_results(start, end, "pomps_paper_graph0", {"smoke_test": smoke_test, "seed": seed})
+    exp.save_results(start, end, experiment_name, {"smoke_test": smoke_test, "seed": seed})
 
