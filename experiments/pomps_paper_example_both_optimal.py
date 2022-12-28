@@ -26,7 +26,7 @@ def sampler_over():
 fcm = FunctionalCausalModel({Functor(lambda U1: pyro.sample("C", dist.Normal(U1, 0.1)), 'C'),
                              Functor(lambda C, U1: pyro.sample("X1", dist.Normal(U1 + C, 0.1)), 'X1'),
                              Functor(
-                                 lambda C, X1, U2: pyro.sample("X2", dist.Normal(torch.abs(C - X1)+0.2, 0.1)),
+                                 lambda C, X1, U2: pyro.sample("X2", dist.Normal(C+X1, 0.01)),
                                  'X2'),
                              Functor(lambda U2, X2, C: pyro.sample("Y",
                                                                    dist.Normal(torch.cos(C - X2) + U2 / 100, 0.001)),
