@@ -72,7 +72,6 @@ class AdHEBO(HEBO):
             assert len(rec) == len(opt.res.F)
             rec['__AC_VAL'] = list(map(list, opt.res.F))
             rec = rec[self.check_unique(rec)]
-            rec.drop_duplicates(subset=set(rec.columns) - {acq_col_name})
 
             cnt = 0
             while rec.shape[0] < n_suggestions:
@@ -124,5 +123,5 @@ class AdHEBO(HEBO):
         self.__model = None
 
     def check_unique(self, rec: pd.DataFrame, acq_col="__AC_VAL") -> [bool]:
-        return (~pd.concat([self.X, rec], axis=0).duplicated(subset=set(rec.columns) - {acq_col}).tail(
+        return (~pd.concat([self.X, rec[list(set(rec.columns) - {acq_col})]], axis=0).duplicated().tail(
             rec.shape[0]).values).tolist()

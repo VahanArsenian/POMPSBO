@@ -55,4 +55,3 @@ class CausalOptimiser:
             rec = opt.suggest(n_suggestions=n_suggestions)
             opt.observe(rec, objective(rec))
         return opt.best_x, objective.factor * opt.best_y
-

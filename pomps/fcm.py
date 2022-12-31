@@ -29,7 +29,7 @@ class FunctionalCausalModel:
 
     def __init__(self, functors: tp.Set[Functor],
                  sampler_over_exogenous: tp.Callable[..., tp.Dict[str, tp.Any]]):
-        self.functors = {f.variable: f for f in functors}
+        self._functors = {f.variable: f for f in functors}
         self.endogenous = set(self.functors.keys())
         self.exogenous = union([f.arguments for f in self.functors.values()]) - self.endogenous
         self.prob_over_exogenous = sampler_over_exogenous
@@ -37,6 +37,10 @@ class FunctionalCausalModel:
         assert set(sampler_over_exogenous().keys()) == self.exogenous, \
             f"Invalid probability measure over exogenous: " \
             f"vars are: {self.exogenous}, sampler gives: {set(sampler_over_exogenous().keys())}"
+
+    @property
+    def functors(self):
+        return self._functors.copy()
 
     def induced_graph(self):
         # TODO: Cache the induced graph
