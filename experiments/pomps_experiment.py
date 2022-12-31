@@ -1,3 +1,4 @@
+import enum
 import logging
 from abc import ABC, abstractmethod
 from pomps.fcm import FunctionalCausalModel, ContextualCausalGraph
@@ -25,7 +26,6 @@ class Experiment(ABC):
     def log_results(self, **kwargs):
         pass
 
-
     @abstractmethod
     def step(self):
         pass
@@ -35,12 +35,27 @@ class Experiment(ABC):
         pass
 
 
+class OptimizationObjective(enum.Enum):
+
+    maximize = "maximize"
+    minimize = "minimize"
+
+    def coefficient(self):
+        if self == OptimizationObjective.minimize:
+            return 1
+        elif self == OptimizationObjective.maximize:
+            return -1
+        else:
+            raise NotImplementedError
+
+
 class POMPSExperiment(Experiment):
     def __init__(self, fcm: FunctionalCausalModel, interventional_variables: tp.Set[str],
                  contextual_variables: tp.Set[str], optimization_domain: tp.List[Domain],
                  target: str = "Y", droppable_scopes: tp.List[MixedPolicyScope] = None, is_single_gp=True,
-                 n_iter=1500, epsilon=-1):
+                 n_iter=1500, epsilon=-1, objetive=OptimizationObjective.maximize):
         super().__init__()
+        self.__opt_factor = objetive.coefficient()
         self.n_iter = n_iter
         self.epsilon = epsilon
         self.is_single_gp = is_single_gp
@@ -55,8 +70,8 @@ class POMPSExperiment(Experiment):
     def __construct_graphs_under_mps(self, optimization_domain, interventional_variables,
                                      contextual_variables, target):
         induced = self.fcm.induced_graph()
-        self.ccg = ContextualCausalGraph(edges=induced, interventional_variables={"X1", "X2"},
-                                         contextual_variables={"C", "X1"}, target=target)
+        self.ccg = ContextualCausalGraph(edges=induced, interventional_variables=interventional_variables,
+                                         contextual_variables=contextual_variables, target=target)
         assert {s.name for s in optimization_domain}.issuperset(contextual_variables), \
             "Contextual optimization domain is incomplete"
         assert {s.name for s in optimization_domain}.issuperset(interventional_variables), \
@@ -64,6 +79,7 @@ class POMPSExperiment(Experiment):
         self.factory = GPFunctorFactory(optimization_domain)
         simplified = MPSDAGController.simplify(self.ccg)
         self.graphs_under_mps = get_mps_for(simplified)
+        self.__results_store = defaultdict(lambda: [])
 
     def __drop_undetected(self, droppable_scopes):
         droppable_scopes = {} if droppable_scopes is None else droppable_scopes
@@ -76,7 +92,6 @@ class POMPSExperiment(Experiment):
             except ValueError as _:
                 continue
         self.graphs_under_mps = list(filter(None, self.graphs_under_mps))
-        self.__results_store = defaultdict(lambda: [])
 
     def __construct_policies(self):
         self.pomps_active = {}
@@ -126,10 +141,10 @@ class POMPSExperiment(Experiment):
         y = torch.tensor([y])
 
         if self.is_single_gp:
-            policy.functional.observe(-y)
+            policy.functional.observe(self.__opt_factor*y)
         else:
             for p in policy:
-                p.functional.observe(-y)
+                p.functional.observe(self.__opt_factor*y)
         self.log_results(smp, mps)
 
     def iterate(self):
@@ -140,6 +155,11 @@ class POMPSExperiment(Experiment):
         path = Path(__file__).parent.parent.joinpath("experiment_results")
         if not path.exists():
             path.mkdir()
+
+        path = path.joinpath(prefix)
+        if not path.exists():
+            path.mkdir()
+
         path = path.joinpath(f"{prefix}_{uuid4()}.pck")
 
         meta_data = {"start": start, "end": end, "n_iter": self.n_iter,

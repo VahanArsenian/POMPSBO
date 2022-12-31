@@ -10,8 +10,7 @@ parser.add_argument('--n_iter', type=int, help='Number of iterations to be run',
 parser.add_argument('--seed', type=int, help='Seed for torch, python, and numpy', default=42)
 parser.add_argument('--log_file', type=str, help='Log file path',
                     default="pomps_paper_graph0.log")
-parser.add_argument('--experiment_name', type=str, help='Experiment name. Used to define artefact names',
-                    default="pomps_paper_graph0")
+
 
 args = vars(parser.parse_args())
 print(args)
@@ -19,7 +18,6 @@ smoke_test = args['smoke']
 n_iter = args['n_iter']
 seed = args['seed']
 log_file = args['log_file']
-experiment_name = args["experiment_name"]
 
 
 logger = logging.getLogger('pomps_logger')

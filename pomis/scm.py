@@ -33,6 +33,7 @@ class Domain:
     def __hash__(self):
         return hash(self.name)
 
+
 @dataclasses.dataclass
 class RealDomain(Domain):
 
