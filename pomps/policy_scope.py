@@ -61,7 +61,7 @@ class MixedPolicyScope:
         return union([component.to_pairs() for component in self.components.values()])
 
     def __repr__(self):
-        return "\t".join([v.__repr__() for v in self.components.values()])
+        return "\t".join([v.__repr__() for v in sorted(list(self.components.values()), key=lambda x: x.target)])
 
     def implied(self, variables: tp.Set[str]):
         # print(variables)

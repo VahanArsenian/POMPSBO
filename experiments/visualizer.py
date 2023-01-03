@@ -2,6 +2,7 @@ import os
 import pickle
 import pandas as pd
 import seaborn as sns
+from experiments.pomps_experiment import OptimizationObjective
 from pathlib import Path
 import matplotlib.pyplot as plt
 sns.set_theme()
@@ -9,8 +10,12 @@ sns.set_theme()
 
 class Visualizer:
 
-    def __init__(self, root: str, experiment_name: str, max_expected_reward: float, exp_dir: str = None):
+    def __init__(self, root: str, experiment_name: str, objective: OptimizationObjective,
+                 max_expected_reward: float, exp_dir: str = None, uncertainty=('pi', 50), central_tendency="median"):
         self.root = Path(root)
+        self.uncertainty = uncertainty
+        self.central_tendency = central_tendency
+        self.objective = objective
         self.experiment_name = experiment_name
         self.exp_dir = experiment_name if exp_dir is None else exp_dir
         self.directory_path = self.root.joinpath(self.exp_dir)
@@ -34,7 +39,7 @@ class Visualizer:
             df = pd.DataFrame(results).reset_index()
             df = df.sort_values("index")
             df['EXP_ID'] = idx
-            df['Regret'] = self.max_expected_reward - df['Y']
+            df['Regret'] = -self.objective.coefficient() * (self.max_expected_reward - df['Y'])
             df['Cum_Regret'] = df['Regret'].cumsum()
             yield df
 
@@ -56,9 +61,9 @@ class Visualizer:
         plt.figure()
         self.plot_pomps_frequency()
         plt.figure()
-        self.plot_target()
+        self.plot_target(self.central_tendency, self.uncertainty)
         plt.figure()
-        self.plot_regret()
+        self.plot_regret(self.central_tendency, self.uncertainty)
         plt.figure()
-        self.plot_cumulative_regret()
+        self.plot_cumulative_regret(self.central_tendency, self.uncertainty)
 
