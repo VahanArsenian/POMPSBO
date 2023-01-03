@@ -179,7 +179,6 @@ class POMPSExperiment(Experiment):
         self.factory = GPFunctorFactory(optimization_domain)
         simplified = MPSDAGController.simplify(self.ccg)
         self.graphs_under_policies = get_mps_for(simplified)
-        self.__results_store = defaultdict(lambda: [])
 
     def __drop_undetected(self, droppable_scopes):
         droppable_scopes = {} if droppable_scopes is None else droppable_scopes

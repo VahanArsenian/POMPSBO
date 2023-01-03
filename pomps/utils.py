@@ -6,7 +6,7 @@ import numpy as np
 
 
 def union(sets: tp.Iterable[tp.Set]) -> tp.Set:
-    return functools.reduce(lambda x, y: x | y, sets)
+    return functools.reduce(lambda x, y: x | y, sets, set())
 
 
 def all_combs(base, start=0):
