@@ -49,7 +49,7 @@ if __name__ == "__main__":
     np.random.seed(seed)
     random.seed(seed)
     torch.manual_seed(seed)
-    experiment_name = "cbo_"
+    experiment_name = "cbo_aspirin_statin_hom"
 
     exp = CaBOExperiment(fcm, {"age", "bmi", "cancer"}, domain, "Y", n_iter=16 if smoke_test else n_iter,
                          experiment_name=experiment_name, objetive=OptimizationObjective.minimize)
