@@ -41,12 +41,12 @@ if __name__ == "__main__":
     experiment_name = "pomps_paper_graph0"
 
     exp = POMPSExperiment(fcm, {"X1", "X2"}, {"C"}, domain, "Y", [MixedPolicyScope(set())],
-                          n_iter=16 if smoke_test else n_iter)
+                          n_iter=16 if smoke_test else n_iter, experiment_name=experiment_name)
 
-    exp.iterate()
+    exp.iterate({"smoke_test": smoke_test, "seed": seed}, smoke_test=smoke_test)
     end = datetime.datetime.now()
 
-    if not smoke_test:
-        exp.save_results(start, end, experiment_name, {"smoke_test": smoke_test, "seed": seed})
+    # if not smoke_test:
+    #     exp.save_results(start, end, experiment_name, {"smoke_test": smoke_test, "seed": seed})
 
 
