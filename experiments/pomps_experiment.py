@@ -105,7 +105,7 @@ class Experiment(ABC):
         if not path.exists():
             path.mkdir()
 
-        path = path.joinpath(f"{prefix}_{uuid4()}.pck")
+        path = path.joinpath(f"{prefix}_{self._run_id}.pck")
 
         with path.open("wb") as fd:
             pickle.dump({'meta': meta_data, "results": dict(self._results_store)}, fd)
@@ -162,10 +162,6 @@ class POMPSExperiment(Experiment):
 
         self._active_interventional = union([v.interventional_variables for _, _, v in (self.policies_active.values())])
         self._active_context = union([v.contextual_variables for _, _, v in (self.policies_active.values())])
-        self.debug = debug
-        self._run_id = uuid4()
-        self.auto_log_each_n_iter = auto_log_each_n_iter
-        self.experiment_name = experiment_name
 
     def __construct_graphs_under_policy(self, optimization_domain, interventional_variables,
                                         contextual_variables, target):
