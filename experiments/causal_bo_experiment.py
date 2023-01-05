@@ -39,7 +39,6 @@ class CaBOExperiment(Experiment):
             "Interventional optimization domain is incomplete"
         self.graphs_under_policies = [(MPSDAGController.graph_under_mps(mps, self.ccg), mps) for mps in mps_cmp]
         self.factory = GPFunctorFactory(optimization_domain)
-        self.__results_store = defaultdict(lambda: [])
 
     @classmethod
     def __convert_pomis_to_mps(cls, pomis_s: tp.FrozenSet[tp.FrozenSet[str]]) -> tp.List[MixedPolicyScope]:
@@ -63,5 +62,3 @@ class CaBOExperiment(Experiment):
         if meta_data is not None:
             md.update(meta_data)
         super().save_results(start, end, prefix, md)
-
-

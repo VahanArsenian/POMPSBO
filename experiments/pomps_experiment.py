@@ -3,7 +3,8 @@ import enum
 import logging
 from abc import ABC, abstractmethod
 from pomps.fcm import FunctionalCausalModel, ContextualCausalGraph
-from pomps.controllers import GPFunctorFactory, MixedPolicyScope, get_mps_for, PolicyFCM, MPSDAGController
+from pomps.controllers import GPFunctorFactory, MixedPolicyScope, get_mps_for, PolicyFCM, \
+    MPSDAGController, PolicyComponent
 from pomis.scm import Domain
 from pomps.utils import pareto_optimal, union
 import numpy as np
@@ -156,15 +157,15 @@ class POMPSExperiment(Experiment):
         self.epsilon = epsilon
         self.is_single_gp = is_single_gp
         self.fcm = fcm
-        self.__construct_graphs_under_policy(optimization_domain, interventional_variables, contextual_variables, target)
+        self._construct_graphs_under_policy(optimization_domain, interventional_variables, contextual_variables, target)
         self.__drop_undetected(droppable_scopes)
         self._construct_policies()
 
         self._active_interventional = union([v.interventional_variables for _, _, v in (self.policies_active.values())])
         self._active_context = union([v.contextual_variables for _, _, v in (self.policies_active.values())])
 
-    def __construct_graphs_under_policy(self, optimization_domain, interventional_variables,
-                                        contextual_variables, target):
+    def _construct_graphs_under_policy(self, optimization_domain, interventional_variables,
+                                       contextual_variables, target):
         induced = self.fcm.induced_graph()
         self.ccg = ContextualCausalGraph(edges=induced, interventional_variables=interventional_variables,
                                          contextual_variables=contextual_variables, target=target)
@@ -205,3 +206,20 @@ class POMPSExperiment(Experiment):
             md.update(meta_data)
 
         super().save_results(start, end, prefix, md)
+
+
+class CoBOExperiment(POMPSExperiment):
+
+    def _construct_graphs_under_policy(self, optimization_domain, interventional_variables,
+                                       contextual_variables, target):
+        induced = self.fcm.induced_graph()
+        self.ccg = ContextualCausalGraph(edges=induced, interventional_variables=interventional_variables,
+                                         contextual_variables=contextual_variables, target=target)
+        components = []
+        for iv in interventional_variables:
+            components.append(PolicyComponent(iv, contextual_variables))
+        mps = MixedPolicyScope(set(components))
+        assert {s.name for s in optimization_domain}.issuperset(interventional_variables), \
+            "Interventional optimization domain is incomplete"
+        self.graphs_under_policies = [(MPSDAGController.graph_under_mps(mps, self.ccg), mps) for mps in [mps]]
+        self.factory = GPFunctorFactory(optimization_domain)
