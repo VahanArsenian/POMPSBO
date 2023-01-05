@@ -28,7 +28,7 @@ class PolicyComponent:
             return False
 
     def __repr__(self):
-        return f"<{self.target}, {self.context}>"
+        return f"<{self.target}, {sorted(self.context)}>"
 
 
 class MixedPolicyScope:

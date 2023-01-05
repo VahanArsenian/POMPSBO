@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
-from experiments.scms import aspirin_statin_hom_broader as environ
+from experiments.scms import aspirin_statin_het_broader as environ
 import datetime
 import torch
 from experiments.pomps_experiment import POMPSExperiment, OptimizationObjective
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     np.random.seed(seed)
     random.seed(seed)
     torch.manual_seed(seed)
-    experiment_name = "pomps_aspirin_statin_hom"
+    experiment_name = "pomps_aspirin_statin_het"
 
     exp = POMPSExperiment(environ.fcm, {"aspirin", 'statin'}, {'age', "bmi"},
                           environ.domain, n_iter=16 if smoke_test else n_iter,

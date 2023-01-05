@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
-from experiments.scms import aspirin_statin_hom as environ
+from experiments.scms import aspirin_statin_het as environ
 import datetime
 import torch
 from experiments.causal_bo_experiment import CaBOExperiment, OptimizationObjective
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     np.random.seed(seed)
     random.seed(seed)
     torch.manual_seed(seed)
-    experiment_name = "cbo_aspirin_statin_hom"
+    experiment_name = "cbo_aspirin_statin_het"
 
     exp = CaBOExperiment(environ.fcm, {"age", "bmi", "cancer"},
                          environ.domain, "Y", n_iter=16 if smoke_test else n_iter,
