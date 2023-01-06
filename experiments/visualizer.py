@@ -2,6 +2,7 @@ import os
 import pickle
 import pandas as pd
 import seaborn as sns
+import typing as tp
 from experiments.pomps_experiment import OptimizationObjective
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -44,26 +45,30 @@ class Visualizer:
             yield df
 
     def plot_pomps_frequency(self):
-        return sns.lineplot(data=self.policy_freq, x='index', y='freq', hue='MPS')
+        return sns.lineplot(data=self.policy_freq, x='index', y='freq', hue='MPS').set(title=self.experiment_name)
 
     def plot_target(self, central_tendency='median', uncertainty=('pi', 50)):
-        return sns.lineplot(data=self.combined_df, x='index', y='Y', estimator=central_tendency, errorbar=uncertainty)
+        return sns.lineplot(data=self.combined_df, x='index', y='Y', estimator=central_tendency, errorbar=uncertainty).set(title=self.experiment_name)
 
     def plot_regret(self, central_tendency='median', uncertainty=('pi', 50)):
         return sns.lineplot(data=self.combined_df, x='index', y='Regret',
-                            estimator=central_tendency, errorbar=uncertainty)
+                            estimator=central_tendency, errorbar=uncertainty).set(title=self.experiment_name)
 
     def plot_cumulative_regret(self, central_tendency='median', uncertainty=('pi', 50)):
         return sns.lineplot(data=self.combined_df, x='index', y='Cum_Regret',
-                            estimator=central_tendency, errorbar=uncertainty)
+                            estimator=central_tendency, errorbar=uncertainty).set(title=self.experiment_name)
+
+    def _plot(self):
+        return [self.plot_pomps_frequency, self.plot_target, self.plot_regret, self.plot_cumulative_regret]
 
     def summary(self):
-        plt.figure()
-        self.plot_pomps_frequency()
-        plt.figure()
-        self.plot_target(self.central_tendency, self.uncertainty)
-        plt.figure()
-        self.plot_regret(self.central_tendency, self.uncertainty)
-        plt.figure()
-        self.plot_cumulative_regret(self.central_tendency, self.uncertainty)
+        for pl in self._plot():
+            plt.figure()
+            pl()
 
+    @classmethod
+    def visualise_multiple(cls, visualisers: tp.List['Visualizer']):
+        for x in zip(*[v._plot() for v in visualisers]):
+            plt.figure()
+            for xx in x:
+                xx()

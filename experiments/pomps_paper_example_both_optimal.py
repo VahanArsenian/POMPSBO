@@ -21,7 +21,8 @@ if __name__ == "__main__":
     experiment_name = "pomps_paper_example_both_optimal0"
 
     exp = POMPSExperiment(environ.fcm, {"X1", "X2"}, {"C"}, environ.domain,
-                          "Y", [MixedPolicyScope(set())], n_iter=16 if smoke_test else n_iter)
+                          "Y", [MixedPolicyScope(set())], n_iter=16 if smoke_test else n_iter,
+                          experiment_name=experiment_name)
 
     exp.iterate({"smoke_test": smoke_test, "seed": seed}, smoke_test=smoke_test)
     end = datetime.datetime.now()
