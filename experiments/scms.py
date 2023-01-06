@@ -65,7 +65,7 @@ fcm = FunctionalCausalModel({Functor(lambda: pyro.sample("age", dist.Uniform(55,
                                                                                    )),
                                      'cancer'),
                              Functor(lambda age, bmi, statin, aspirin, cancer: pyro.sample("Y", dist.Normal(
-                                  0.5*aspirin*aspirin+torch.square(((age-55)/21)*torch.abs((bmi-27)/4))-2*((age-55)/21)*torch.abs((bmi-27)/4)*(aspirin+statin), 0.01)),
+                                  cancer+0.5*aspirin*aspirin+torch.square(((age-55)/21)*torch.abs((bmi-27)/4))-2*((age-55)/21)*torch.abs((bmi-27)/4)*(aspirin+statin), 0.01)),
                                      'Y')},
                             latent_sampler_for_aspirin_staitn)
 
