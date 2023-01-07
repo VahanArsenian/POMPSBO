@@ -61,11 +61,16 @@ fcm = FunctionalCausalModel({Functor(lambda: pyro.sample("age", dist.Uniform(55,
                                      'statin'),
                              Functor(lambda age, bmi, statin, aspirin: pyro.sample("cancer",
                                                                                    dist.Delta(
-                                                                                       statin*statin+torch.square(((age-55)/21)*torch.abs((bmi-27)/4))+0.5*aspirin*aspirin
+                                                                                       statin * statin + torch.square(((
+                                                                                                                               age - 55) / 21) * torch.abs(
+                                                                                           (
+                                                                                                   bmi - 27) / 4)) + 0.5 * aspirin * aspirin
                                                                                    )),
                                      'cancer'),
                              Functor(lambda age, bmi, statin, aspirin, cancer: pyro.sample("Y", dist.Normal(
-                                  cancer+0.5*aspirin*aspirin+torch.square(((age-55)/21)*torch.abs((bmi-27)/4))-2*((age-55)/21)*torch.abs((bmi-27)/4)*(aspirin+statin), 0.01)),
+                                 cancer + 0.5 * aspirin * aspirin + torch.square(
+                                     ((age - 55) / 21) * torch.abs((bmi - 27) / 4)) - 2 * ((age - 55) / 21) * torch.abs(
+                                     (bmi - 27) / 4) * (aspirin + statin), 0.01)),
                                      'Y')},
                             latent_sampler_for_aspirin_staitn)
 
@@ -92,6 +97,28 @@ fcm = FunctionalCausalModel({Functor(lambda U1: pyro.sample("C", dist.Normal(U1,
 domain = [RealDomain("X1", -2, 2), RealDomain("X2", -2, 2), RealDomain("C", -2, 2)]
 
 pomps_example = SCMOptimizer(fcm, domain)
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+fcm = FunctionalCausalModel({Functor(lambda: pyro.sample("C0", dist.Normal(0, 0.2)), 'C0'),
+                             Functor(lambda U1, C0: pyro.sample("C", dist.Normal(C0 - U1, 0.1)), 'C'),
+                             Functor(lambda U1, C0: pyro.sample("X1", dist.Normal(U1 + C0, 0.1)), 'X1'),
+                             Functor(lambda C: pyro.sample("C2", dist.Normal(C, 0.1)), 'C2'),
+                             Functor(lambda C2: pyro.sample("C3", dist.Normal(C2, 0.1)), 'C3'),
+                             Functor(lambda C3: pyro.sample("C4", dist.Normal(C3, 0.1)), 'C4'),
+                             Functor(lambda C4: pyro.sample("C5", dist.Normal(C4, 0.1)), 'C5'),
+                             Functor(lambda C5: pyro.sample("C6", dist.Normal(C5, 0.1)), 'C6'),
+                             Functor(lambda C, X1, C6, U2: pyro.sample("X2", dist.Normal(
+                                 (C + C6) / 2 + X1 + torch.abs(U2) * 0.3,
+                                 0.1)), 'X2'),
+                             Functor(lambda U2, X2, C: pyro.sample("Y",
+                                                                   dist.Normal(torch.cos(C - X2) + U2 / 100, 0.01)),
+                                     "Y")}, latent_over_pomps_example)
+
+domain = [RealDomain("X1", -2, 2), RealDomain("X2", -2, 2), RealDomain("C", -2, 2), RealDomain("C0", -2.2, 2.2),
+          RealDomain("C2", -2.4, 2.4), RealDomain("C3", -2.6, 2.6), RealDomain("C4", -2.8, 2.8),
+          RealDomain("C5", -3, 3),
+          RealDomain("C6", -3.2, 3.2)]
+
+pomps_example_hard_for_contextual = SCMOptimizer(fcm, domain)
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 fcm = FunctionalCausalModel({Functor(lambda U1: pyro.sample("C", dist.Normal(U1, 0.1)), 'C'),
                              Functor(lambda C, U1: pyro.sample("X1", dist.Normal(U1 + C, 0.1)), 'X1'),

@@ -44,19 +44,24 @@ class Visualizer:
             df['Cum_Regret'] = df['Regret'].cumsum()
             yield df
 
-    def plot_pomps_frequency(self):
-        return sns.lineplot(data=self.policy_freq, x='index', y='freq', hue='MPS').set(title=self.experiment_name)
+    def plot_pomps_frequency(self, c=None):
+        return sns.lineplot(data=self.policy_freq, x='index',
+                            y='freq', hue='MPS').set(title="MPS Frequency")
 
-    def plot_target(self, central_tendency='median', uncertainty=('pi', 50)):
-        return sns.lineplot(data=self.combined_df, x='index', y='Y', estimator=central_tendency, errorbar=uncertainty).set(title=self.experiment_name)
+    def plot_target(self, central_tendency='median', uncertainty=('pi', 50), c=None):
+        return sns.lineplot(data=self.combined_df, x='index', y='Y',
+                            estimator=central_tendency, errorbar=uncertainty,
+                            label=self.experiment_name).set(title="Target")
 
-    def plot_regret(self, central_tendency='median', uncertainty=('pi', 50)):
+    def plot_regret(self, central_tendency='median', uncertainty=('pi', 50), c=None):
         return sns.lineplot(data=self.combined_df, x='index', y='Regret',
-                            estimator=central_tendency, errorbar=uncertainty).set(title=self.experiment_name)
+                            estimator=central_tendency, errorbar=uncertainty,
+                            label=self.experiment_name).set(title="Regret")
 
-    def plot_cumulative_regret(self, central_tendency='median', uncertainty=('pi', 50)):
+    def plot_cumulative_regret(self, central_tendency='median', uncertainty=('pi', 50), c=None):
         return sns.lineplot(data=self.combined_df, x='index', y='Cum_Regret',
-                            estimator=central_tendency, errorbar=uncertainty).set(title=self.experiment_name)
+                            estimator=central_tendency, errorbar=uncertainty,
+                            label=self.experiment_name).set(title="Cumulative Regret")
 
     def _plot(self):
         return [self.plot_pomps_frequency, self.plot_target, self.plot_regret, self.plot_cumulative_regret]
@@ -68,7 +73,8 @@ class Visualizer:
 
     @classmethod
     def visualise_multiple(cls, visualisers: tp.List['Visualizer']):
+        pal = sns.color_palette()
         for x in zip(*[v._plot() for v in visualisers]):
             plt.figure()
-            for xx in x:
+            for idx, xx in enumerate(x):
                 xx()

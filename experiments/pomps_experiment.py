@@ -73,7 +73,7 @@ class Experiment(ABC):
         trial_id = self._choose_trial()
 
         fcm_m, policy, mps = self.policies_active[trial_id]
-        self.debug_print(f"Policy for {policy.variable}, {policy.arguments}")
+        self.debug_print(f"Policy for {mps.interventional_variables}, {mps.contextual_variables}")
 
         # logger.debug(f"Trial index {trial_id}")
         self.debug_print(f"Trial index {trial_id}")
