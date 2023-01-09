@@ -55,10 +55,13 @@ class FunctionalCausalModel:
                     edges.append((arg, f.variable))
         bi_dir_edges = set()
         for exog, ed in puc_counter.items():
-            if len(ed) > 1:
+            if len(ed) > 2:
                 c_component_endog = [edge[1] for edge in ed]
                 bi_dir_edges |= set(combinations(c_component_endog, 2))
-        for idx, bi_dir_edge in enumerate(bi_dir_edges, 1):
+            elif len(ed) > 1:
+                uc_s += [exog]
+                edges += ed
+        for idx, bi_dir_edge in enumerate(bi_dir_edges, len(uc_s)):
             projected_uc = f"U{idx}"
             uc_s += [projected_uc]
             edges += [(projected_uc, bi_dir_edge[0]), (projected_uc, bi_dir_edge[1])]
