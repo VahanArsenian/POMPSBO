@@ -48,19 +48,19 @@ class Visualizer:
         return sns.lineplot(data=self.policy_freq, x='index',
                             y='freq', hue='MPS').set(title="MPS Frequency")
 
-    def plot_target(self, central_tendency='median', uncertainty=('pi', 50), c=None):
+    def plot_target(self,c=None):
         return sns.lineplot(data=self.combined_df, x='index', y='Y',
-                            estimator=central_tendency, errorbar=uncertainty,
+                            estimator=self.central_tendency, errorbar=self.uncertainty,
                             label=self.experiment_name).set(title="Target")
 
-    def plot_regret(self, central_tendency='median', uncertainty=('pi', 50), c=None):
+    def plot_regret(self, c=None):
         return sns.lineplot(data=self.combined_df, x='index', y='Regret',
-                            estimator=central_tendency, errorbar=uncertainty,
+                            estimator=self.central_tendency, errorbar=self.uncertainty,
                             label=self.experiment_name).set(title="Regret")
 
-    def plot_cumulative_regret(self, central_tendency='median', uncertainty=('pi', 50), c=None):
+    def plot_cumulative_regret(self, c=None):
         return sns.lineplot(data=self.combined_df, x='index', y='Cum_Regret',
-                            estimator=central_tendency, errorbar=uncertainty,
+                            estimator=self.central_tendency, errorbar=self.uncertainty,
                             label=self.experiment_name).set(title="Cumulative Regret")
 
     def _plot(self):

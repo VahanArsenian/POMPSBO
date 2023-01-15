@@ -5,10 +5,44 @@ import pandas as pd
 import numpy as np
 
 
+class ReducedMACE(MACE):
+
+    @property
+    def num_obj(self):
+        return 2
+
+    def eval(self, x: torch.FloatTensor, xe: torch.LongTensor) -> torch.FloatTensor:
+        """
+        minimize (-1 * EI,  -1 * PI, lcb)
+        """
+        with torch.no_grad():
+            py, ps2 = self.model.predict(x, xe)
+            noise = np.sqrt(2.0) * self.model.noise.sqrt()
+            ps = ps2.sqrt().clamp(min=torch.finfo(ps2.dtype).eps)
+            # lcb = (py + noise * torch.randn(py.shape)) - self.kappa * ps
+            normed = ((self.tau - self.eps - py - noise * torch.randn(py.shape)) / ps)
+            dist = torch.distributions.Normal(0., 1.)
+            log_phi = dist.log_prob(normed)
+            Phi = dist.cdf(normed)
+            PI = Phi
+            EI = ps * (Phi * normed + log_phi.exp())
+            logEIapp = ps.log() - 0.5 * normed ** 2 - (normed ** 2 - 1).log()
+            logPIapp = -0.5 * normed ** 2 - torch.log(-1 * normed) - torch.log(torch.sqrt(torch.tensor(2 * np.pi)))
+
+            use_app = ~((normed > -6) & torch.isfinite(EI.log()) & torch.isfinite(PI.log())).reshape(-1)
+            out = torch.zeros(x.shape[0], self.num_obj)
+            # out[:, 0] = lcb.reshape(-1)
+            out[:, 0][use_app] = -1 * logEIapp[use_app].reshape(-1)
+            out[:, 1][use_app] = -1 * logPIapp[use_app].reshape(-1)
+            out[:, 0][~use_app] = -1 * EI[~use_app].log().reshape(-1)
+            out[:, 1][~use_app] = -1 * PI[~use_app].log().reshape(-1)
+            return out
+
+
 class AdHEBO(HEBO):
 
     def __init__(self, space, model_name='gpy',
-                 rand_sample=None, acq_cls=MACE, es='nsga2', model_config=None):
+                 rand_sample=None, acq_cls=ReducedMACE, es='nsga2', model_config=None):
         super().__init__(space, model_name=model_name,
                          rand_sample=rand_sample, acq_cls=acq_cls, es=es, model_config=model_config)
         self.__model = None
