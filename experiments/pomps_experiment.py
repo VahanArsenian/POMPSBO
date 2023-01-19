@@ -15,6 +15,7 @@ from uuid import uuid4
 from tqdm.auto import tqdm
 from pathlib import Path
 import pickle
+from pomps.ucb import UCB
 
 # logger = logging.getLogger("pomps_logger")
 
@@ -83,7 +84,7 @@ class Experiment(ABC):
 
         y = smp[self.ccg.target]
         y = torch.tensor([y])
-        return y, policy, smp, mps
+        return y, policy, smp, mps, trial_id
 
     def iterate(self, additional_meta_data=None, smoke_test=False):
         stat = datetime.datetime.now()
@@ -124,8 +125,8 @@ class Experiment(ABC):
             self.debug_print(f"None detected in acquisition function. Choosing {trial_index}")
         except IndexError as _:
             fold = np.row_stack([p.acq_vals for f, p, _ in self.policies_active.values()])
+            self.debug_print(fold)
             optimal = pareto_optimal(fold)
-            # logger.debug(f"Optimal indexes {optimal}")
             self.debug_print(f"Optimal indexes {optimal}")
             trial_index = np.random.choice(optimal)
         return trial_index
@@ -163,6 +164,16 @@ class POMPSExperiment(Experiment):
 
         self._active_interventional = union([v.interventional_variables for _, _, v in (self.policies_active.values())])
         self._active_context = union([v.contextual_variables for _, _, v in (self.policies_active.values())])
+        self.ucb = UCB(len(self.policies_active))
+
+    def _choose_trial(self):
+        if np.random.uniform(0, 1) < self.epsilon:
+            trial_id = np.random.choice(list(self.policies_active.keys()))
+            # logger.debug(f"Choosing randomly {trial_id}")
+            self.debug_print(f"Choosing randomly {trial_id}")
+            return trial_id
+        else:
+            return self.ucb.suggest()
 
     def _construct_graphs_under_policy(self, optimization_domain, interventional_variables,
                                        contextual_variables, target):
@@ -190,7 +201,8 @@ class POMPSExperiment(Experiment):
         self.graphs_under_policies = list(filter(None, self.graphs_under_policies))
 
     def step(self):
-        y, policy, smp, mps = super().step()
+        y, policy, smp, mps, trial_id = super().step()
+        self.ucb.observe(trial_id, -self._opt_factor * y)
 
         if self.is_single_gp:
             policy.functional.observe(self._opt_factor*y)

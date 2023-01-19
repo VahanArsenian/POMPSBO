@@ -51,7 +51,7 @@ class CaBOExperiment(Experiment):
         return mps
 
     def step(self):
-        y, policy, smp, mps = super().step()
+        y, policy, smp, mps, trial_id = super().step()
         policy.functional.observe(self._opt_factor*y)
 
         self.log_results(smp, mps)
