@@ -48,7 +48,7 @@ class Visualizer:
             df['EXP_ID'] = idx
             df['Regret'] = -self.objective.coefficient() * (self.max_expected_reward - df['Y'])
             df['Cum_Regret'] = df['Regret'].cumsum()
-            df['Cum_Regret_Norm'] = df['Cum_Regret'] / df['index']
+            df['Cum_Regret_Norm'] = df['Cum_Regret'] / (df['index']+1)
             yield df
 
     def plot_pomps_frequency(self, c=None):
