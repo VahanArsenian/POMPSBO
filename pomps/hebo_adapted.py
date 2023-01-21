@@ -146,7 +146,7 @@ class AdHEBO(HEBO):
                 rec['__AC_VAL'] = list(map(list, opt.res.F))
             except TypeError as _:
                 rec['__AC_VAL'] = list(map(lambda x: [x], opt.res.F))
-            print(rec)
+            # print(rec)
             rec = rec[self.check_unique(rec)]
 
             cnt = 0
@@ -155,7 +155,7 @@ class AdHEBO(HEBO):
                 rand_rec = rand_rec[self.check_unique(rand_rec)]
                 rec = rec.append(rand_rec, ignore_index=True)
                 cnt += 1
-                print("Bad entry from", rand_rec)
+                # print("Bad entry from", rand_rec)
                 if cnt > 3:
                     # sometimes the design space is so small that duplicated sampling is unavoidable
                     break
