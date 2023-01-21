@@ -1,8 +1,43 @@
 from hebo.optimizers.hebo import HEBO, MACE, Mean, Sigma, power_transform, get_model, EvolutionOpt
+from hebo.acquisitions.acq import SingleObjectiveAcq, BaseModel, Tensor, Normal
 from hebo.acquisitions.acq import EI, LCB
 import torch
 import pandas as pd
 import numpy as np
+
+
+class CustomEI(SingleObjectiveAcq):
+
+    @property
+    def num_obj(self):
+        return 1
+
+    def __init__(self, model: BaseModel, best_y, **conf):
+        super().__init__(model, **conf)
+        self.tau = best_y
+        self.eps = conf.get('eps', 1e-4)
+        assert (model.num_out == 1)
+
+    def eval(self, x: Tensor, xe: Tensor) -> Tensor:
+        with torch.no_grad():
+            py, ps2 = self.model.predict(x, xe)
+            noise = np.sqrt(2.0) * self.model.noise.sqrt()
+            ps = ps2.sqrt().clamp(min=torch.finfo(ps2.dtype).eps)
+            # lcb = (py + noise * torch.randn(py.shape)) - self.kappa * ps
+            normed = ((self.tau - self.eps - py - noise * torch.randn(py.shape)) / ps)
+            dist = torch.distributions.Normal(0., 1.)
+            log_phi = dist.log_prob(normed)
+            Phi = dist.cdf(normed)
+            PI = Phi
+            EI = ps * (Phi * normed + log_phi.exp())
+            logEIapp = ps.log() - 0.5 * normed ** 2 - (normed ** 2 - 1).log()
+
+            use_app = ~((normed > -6) & torch.isfinite(EI.log()) & torch.isfinite(PI.log())).reshape(-1)
+            out = torch.zeros(x.shape[0], self.num_obj)
+            # out[:, 0] = lcb.reshape(-1)
+            out[:, 0][use_app] = -1 * logEIapp[use_app].reshape(-1)
+            out[:, 0][~use_app] = -1 * EI[~use_app].log().reshape(-1)
+            return out
 
 
 class ReducedMACE(MACE):
@@ -42,7 +77,9 @@ class ReducedMACE(MACE):
 class AdHEBO(HEBO):
 
     def __init__(self, space, model_name='gpy',
-                 rand_sample=None, acq_cls=ReducedMACE, es='nsga2', model_config=None):
+                 rand_sample=None, acq_cls=None, es='nsga2', model_config=None):
+        if acq_cls is None:
+            acq_cls = ReducedMACE
         super().__init__(space, model_name=model_name,
                          rand_sample=rand_sample, acq_cls=acq_cls, es=es, model_config=model_config)
         self.__model = None
@@ -104,7 +141,12 @@ class AdHEBO(HEBO):
             rec = opt.optimize(initial_suggest=best_x, fix_input=fix_input)
             acq_col_name = "__AC_VAL"
             assert len(rec) == len(opt.res.F)
-            rec['__AC_VAL'] = list(map(list, opt.res.F))
+            print(opt.res.F)
+            try:
+                rec['__AC_VAL'] = list(map(list, opt.res.F))
+            except TypeError as _:
+                rec['__AC_VAL'] = list(map(lambda x: [x], opt.res.F))
+            print(rec)
             rec = rec[self.check_unique(rec)]
 
             cnt = 0
@@ -113,6 +155,7 @@ class AdHEBO(HEBO):
                 rand_rec = rand_rec[self.check_unique(rand_rec)]
                 rec = rec.append(rand_rec, ignore_index=True)
                 cnt += 1
+                print("Bad entry from", rand_rec)
                 if cnt > 3:
                     # sometimes the design space is so small that duplicated sampling is unavoidable
                     break
