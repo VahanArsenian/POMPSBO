@@ -102,10 +102,13 @@ pomps_example = SCMOptimizer(fcm, domain)
 fcm = FunctionalCausalModel({Functor(lambda: pyro.sample("C0", dist.Normal(0, 0.2)), 'C0'),
                              Functor(lambda U1, C0: pyro.sample("C", dist.Normal(C0 - U1, 0.1)), 'C'),
                              Functor(lambda U1: pyro.sample("X1", dist.Normal(U1, 0.1)), 'X1'),
-                             Functor(lambda C: pyro.sample("C2", dist.Normal(C, 0.1)), 'C2'),
+                             Functor(lambda: pyro.sample("X3", dist.Uniform(-1, 1)), 'X3'),
+                             Functor(lambda C, X3: pyro.sample("C2", dist.Normal(C+0.01*X3, 0.1)), 'C2'),
                              Functor(lambda C2: pyro.sample("C3", dist.Normal(C2, 0.1)), 'C3'),
-                             Functor(lambda C3: pyro.sample("C4", dist.Normal(C3, 0.1)), 'C4'),
-                             Functor(lambda C4: pyro.sample("C5", dist.Normal(C4, 0.1)), 'C5'),
+                             Functor(lambda: pyro.sample("X4", dist.Uniform(-1, 1)), 'X4'),
+                             Functor(lambda C3, X4: pyro.sample("C4", dist.Normal(C3+0.01*X4, 0.1)), 'C4'),
+                             Functor(lambda: pyro.sample("X5", dist.Uniform(-1, 1)), 'X5'),
+                             Functor(lambda C4, X5: pyro.sample("C5", dist.Normal(C4+0.01*X5, 0.1)), 'C5'),
                              Functor(lambda C5: pyro.sample("C6", dist.Normal(C5, 0.1)), 'C6'),
                              Functor(lambda C, X1, C6, U2: pyro.sample("X2", dist.Normal(
                                  (C + C6) / 2 + X1 + torch.abs(U2) * 0.3,
@@ -114,7 +117,8 @@ fcm = FunctionalCausalModel({Functor(lambda: pyro.sample("C0", dist.Normal(0, 0.
                                                                    dist.Normal(torch.cos(C - X2) + U2 / 100, 0.01)),
                                      "Y")}, latent_over_pomps_example)
 
-domain = [RealDomain("X1", -2, 2), RealDomain("X2", -2, 2), RealDomain("C", -2, 2), RealDomain("C0", -2.2, 2.2),
+domain = [RealDomain("X1", -2, 2), RealDomain("X2", -2, 2), RealDomain("X3", -1, 1), RealDomain("X4", -1, 1),
+          RealDomain("X5", -1, 1), RealDomain("C", -2, 2), RealDomain("C0", -2.2, 2.2),
           RealDomain("C2", -2.4, 2.4), RealDomain("C3", -2.6, 2.6), RealDomain("C4", -2.8, 2.8),
           RealDomain("C5", -3, 3),
           RealDomain("C6", -3.2, 3.2)]
