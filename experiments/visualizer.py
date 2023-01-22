@@ -79,7 +79,7 @@ class Visualizer:
         for s in self.combined_df.MPS.unique():
             sns.lineplot(data=self.cum_prob, x='index', y=s,
                          estimator=self.central_tendency, errorbar=self.uncertainty,
-                         label=self.experiment_name).set(title="Cumulative Frequency")
+                         label=s).set(title="Cumulative Frequency")
 
     def _plot(self):
         return [self.plot_pomps_frequency, self.plot_target, self.plot_regret,
