@@ -1,3 +1,5 @@
+import numpy as np
+
 from pomps.fcm import FunctionalCausalModel
 from pomis.scm import Domain, RealDomain
 import pyro
@@ -62,8 +64,8 @@ fcm = FunctionalCausalModel({Functor(lambda: pyro.sample("age", dist.Uniform(55,
                              Functor(lambda age, bmi, statin, aspirin: pyro.sample("cancer",
                                                                                    dist.Delta(
                                                                                        statin * statin + torch.square((
-                                                                                        (
-                                                                                         age - 55) / 21) * torch.abs(
+                                                                                                                              (
+                                                                                                                                      age - 55) / 21) * torch.abs(
                                                                                            (
                                                                                                    bmi - 27) / 4)) + 0.5 * aspirin * aspirin
                                                                                    )),
@@ -102,13 +104,108 @@ pomps_example = SCMOptimizer(fcm, domain)
 fcm = FunctionalCausalModel({Functor(lambda: pyro.sample("C0", dist.Normal(0, 0.2)), 'C0'),
                              Functor(lambda U1, C0: pyro.sample("C", dist.Normal(C0 - U1, 0.1)), 'C'),
                              Functor(lambda U1: pyro.sample("X1", dist.Normal(U1, 0.1)), 'X1'),
-                             Functor(lambda: pyro.sample("X3", dist.Uniform(-1, 1)), 'X3'),
-                             Functor(lambda C, X3: pyro.sample("C2", dist.Normal(C+0.001*X3, 0.1)), 'C2'),
+                             Functor(lambda: pyro.sample("Ct0", dist.Normal(0, 0.2)), 'Ct0'),
+                             Functor(lambda: pyro.sample("Ct1", dist.Normal(0, 0.2)), 'Ct1'),
+                             Functor(lambda: pyro.sample("Ct2", dist.Normal(0, 0.2)), 'Ct2'),
+                             Functor(lambda: pyro.sample("Ct3", dist.Normal(0, 0.2)), 'Ct3'),
+                             Functor(lambda: pyro.sample("Ct4", dist.Normal(0, 0.2)), 'Ct4'),
+                             Functor(lambda: pyro.sample("Ctt0", dist.Normal(0, 0.2)), 'Ctt0'),
+                             Functor(lambda: pyro.sample("Ctt1", dist.Normal(0, 0.2)), 'Ctt1'),
+                             Functor(lambda: pyro.sample("Ctt2", dist.Normal(0, 0.2)), 'Ctt2'),
+                             Functor(lambda: pyro.sample("Ctt3", dist.Normal(0, 0.2)), 'Ctt3'),
+                             Functor(lambda: pyro.sample("Ctt4", dist.Normal(0, 0.2)), 'Ctt4'),
+                             Functor(lambda: pyro.sample("Cttt0", dist.Normal(0, 0.2)), 'Cttt0'),
+                             Functor(lambda: pyro.sample("Cttt1", dist.Normal(0, 0.2)), 'Cttt1'),
+                             Functor(lambda: pyro.sample("Cttt2", dist.Normal(0, 0.2)), 'Cttt2'),
+                             Functor(lambda: pyro.sample("Cttt3", dist.Normal(0, 0.2)), 'Cttt3'),
+                             Functor(lambda: pyro.sample("Cttt4", dist.Normal(0, 0.2)), 'Cttt4'),
+                             Functor(lambda: pyro.sample("Ctttt0", dist.Normal(0, 0.2)), 'Ctttt0'),
+                             Functor(lambda: pyro.sample("Ctttt1", dist.Normal(0, 0.2)), 'Ctttt1'),
+                             Functor(lambda: pyro.sample("Ctttt2", dist.Normal(0, 0.2)), 'Ctttt2'),
+                             Functor(lambda: pyro.sample("Ctttt3", dist.Normal(0, 0.2)), 'Ctttt3'),
+                             Functor(lambda: pyro.sample("Ctttt4", dist.Normal(0, 0.2)), 'Ctttt4'),
+                             Functor(lambda Ct0, Ct1, Ct2, Ct3, Ct4, Ctt0, Ctt1, Ctt2,
+                                            Ctt3, Ctt4, Cttt0, Cttt1, Cttt2, Cttt3, Cttt4, Ctttt0, Ctttt1, Ctttt2, Ctttt3, Ctttt4: pyro.sample("X3", dist.Uniform(-1, 1+np.mean(Ct0, Ct1, Ct2, Ct3, Ct4, Ctt0, Ctt1, Ctt2, Ctt3, Ctt4, Cttt0, Cttt1, Cttt2, Cttt3, Cttt4,
+                                                                                                                                                                                Ctttt0, Ctttt1, Ctttt2, Ctttt3, Ctttt4))), 'X3'),
+                             Functor(lambda Ct0, Ct1, Ct2, Ct3, Ct4, Ctt0, Ctt1, Ctt2,
+                                            Ctt3, Ctt4, Cttt0, Cttt1, Cttt2, Cttt3, Cttt4, Ctttt0, Ctttt1, Ctttt2, Ctttt3, Ctttt4: pyro.sample("X4", dist.Uniform(-1, 1+np.mean(Ct0, Ct1, Ct2, Ct3, Ct4, Ctt0, Ctt1, Ctt2, Ctt3, Ctt4, Cttt0, Cttt1, Cttt2, Cttt3, Cttt4,
+                                                                                                                                                                                Ctttt0, Ctttt1, Ctttt2, Ctttt3, Ctttt4))), 'X4'),
+                             Functor(lambda Ct0, Ct1, Ct2, Ct3, Ct4, Ctt0, Ctt1, Ctt2,
+                                            Ctt3, Ctt4, Cttt0, Cttt1, Cttt2, Cttt3, Cttt4, Ctttt0, Ctttt1, Ctttt2, Ctttt3, Ctttt4: pyro.sample("X5", dist.Uniform(-1, 1+np.mean(Ct0, Ct1, Ct2, Ct3, Ct4, Ctt0, Ctt1, Ctt2, Ctt3, Ctt4, Cttt0, Cttt1, Cttt2, Cttt3, Cttt4,
+                                                                                                                                                                                Ctttt0, Ctttt1, Ctttt2, Ctttt3, Ctttt4))), 'X5'),
+                             Functor(lambda Ct0, Ct1, Ct2, Ct3, Ct4, Ctt0, Ctt1, Ctt2,
+                                            Ctt3, Ctt4, Cttt0, Cttt1, Cttt2, Cttt3, Cttt4, Ctttt0, Ctttt1, Ctttt2, Ctttt3, Ctttt4: pyro.sample("X6", dist.Uniform(-1, 1+np.mean(Ct0, Ct1, Ct2, Ct3, Ct4, Ctt0, Ctt1, Ctt2, Ctt3, Ctt4, Cttt0, Cttt1, Cttt2, Cttt3, Cttt4,
+                                                                                                                                                                                Ctttt0, Ctttt1, Ctttt2, Ctttt3, Ctttt4))), 'X6'),
+                             Functor(lambda Ct0, Ct1, Ct2, Ct3, Ct4, Ctt0, Ctt1, Ctt2,
+                                            Ctt3, Ctt4, Cttt0, Cttt1, Cttt2, Cttt3, Cttt4, Ctttt0, Ctttt1, Ctttt2, Ctttt3, Ctttt4: pyro.sample("X7", dist.Uniform(-1, 1+np.mean(Ct0, Ct1, Ct2, Ct3, Ct4, Ctt0, Ctt1, Ctt2, Ctt3, Ctt4, Cttt0, Cttt1, Cttt2, Cttt3, Cttt4,
+                                                                                                                                                                                Ctttt0, Ctttt1, Ctttt2, Ctttt3, Ctttt4))), 'X7'),
+                             Functor(lambda Ct0, Ct1, Ct2, Ct3, Ct4, Ctt0, Ctt1, Ctt2,
+                                            Ctt3, Ctt4, Cttt0, Cttt1, Cttt2, Cttt3, Cttt4, Ctttt0, Ctttt1, Ctttt2,
+                                            Ctttt3, Ctttt4: pyro.sample("X8", dist.Uniform(-1,
+                                                                                           1 + np.mean(Ct0, Ct1, Ct2,
+                                                                                                       Ct3, Ct4, Ctt0,
+                                                                                                       Ctt1, Ctt2, Ctt3,
+                                                                                                       Ctt4, Cttt0,
+                                                                                                       Cttt1, Cttt2,
+                                                                                                       Cttt3, Cttt4,
+                                                                                                       Ctttt0, Ctttt1,
+                                                                                                       Ctttt2, Ctttt3,
+                                                                                                       Ctttt4))), 'X8'),
+Functor(lambda Ct0, Ct1, Ct2, Ct3, Ct4, Ctt0, Ctt1, Ctt2,
+                                            Ctt3, Ctt4, Cttt0, Cttt1, Cttt2, Cttt3, Cttt4, Ctttt0, Ctttt1, Ctttt2,
+                                            Ctttt3, Ctttt4: pyro.sample("X8", dist.Uniform(-1,
+                                                                                           1 + np.mean(Ct0, Ct1, Ct2,
+                                                                                                       Ct3, Ct4, Ctt0,
+                                                                                                       Ctt1, Ctt2, Ctt3,
+                                                                                                       Ctt4, Cttt0,
+                                                                                                       Cttt1, Cttt2,
+                                                                                                       Cttt3, Cttt4,
+                                                                                                       Ctttt0, Ctttt1,
+                                                                                                       Ctttt2, Ctttt3,
+                                                                                                       Ctttt4))), 'X9'),
+Functor(lambda Ct0, Ct1, Ct2, Ct3, Ct4, Ctt0, Ctt1, Ctt2,
+                                            Ctt3, Ctt4, Cttt0, Cttt1, Cttt2, Cttt3, Cttt4, Ctttt0, Ctttt1, Ctttt2,
+                                            Ctttt3, Ctttt4: pyro.sample("X8", dist.Uniform(-1,
+                                                                                           1 + np.mean(Ct0, Ct1, Ct2,
+                                                                                                       Ct3, Ct4, Ctt0,
+                                                                                                       Ctt1, Ctt2, Ctt3,
+                                                                                                       Ctt4, Cttt0,
+                                                                                                       Cttt1, Cttt2,
+                                                                                                       Cttt3, Cttt4,
+                                                                                                       Ctttt0, Ctttt1,
+                                                                                                       Ctttt2, Ctttt3,
+                                                                                                       Ctttt4))), 'X10'),
+Functor(lambda Ct0, Ct1, Ct2, Ct3, Ct4, Ctt0, Ctt1, Ctt2,
+                                            Ctt3, Ctt4, Cttt0, Cttt1, Cttt2, Cttt3, Cttt4, Ctttt0, Ctttt1, Ctttt2,
+                                            Ctttt3, Ctttt4: pyro.sample("X8", dist.Uniform(-1,
+                                                                                           1 + np.mean(Ct0, Ct1, Ct2,
+                                                                                                       Ct3, Ct4, Ctt0,
+                                                                                                       Ctt1, Ctt2, Ctt3,
+                                                                                                       Ctt4, Cttt0,
+                                                                                                       Cttt1, Cttt2,
+                                                                                                       Cttt3, Cttt4,
+                                                                                                       Ctttt0, Ctttt1,
+                                                                                                       Ctttt2, Ctttt3,
+                                                                                                       Ctttt4))), 'X11'),
+Functor(lambda Ct0, Ct1, Ct2, Ct3, Ct4, Ctt0, Ctt1, Ctt2,
+                                            Ctt3, Ctt4, Cttt0, Cttt1, Cttt2, Cttt3, Cttt4, Ctttt0, Ctttt1, Ctttt2,
+                                            Ctttt3, Ctttt4: pyro.sample("X8", dist.Uniform(-1,
+                                                                                           1 + np.mean(Ct0, Ct1, Ct2,
+                                                                                                       Ct3, Ct4, Ctt0,
+                                                                                                       Ctt1, Ctt2, Ctt3,
+                                                                                                       Ctt4, Cttt0,
+                                                                                                       Cttt1, Cttt2,
+                                                                                                       Cttt3, Cttt4,
+                                                                                                       Ctttt0, Ctttt1,
+                                                                                                       Ctttt2, Ctttt3,
+                                                                                                       Ctttt4))), 'X12'),
+                             Functor(lambda C: pyro.sample("C2", dist.Normal(C + 0.001, 0.1)), 'C2'),
                              Functor(lambda C2: pyro.sample("C3", dist.Normal(C2, 0.1)), 'C3'),
-                             Functor(lambda: pyro.sample("X4", dist.Uniform(-1, 1)), 'X4'),
-                             Functor(lambda C3, X4: pyro.sample("C4", dist.Normal(C3+0.001*X4, 0.1)), 'C4'),
-                             Functor(lambda: pyro.sample("X5", dist.Uniform(-1, 1)), 'X5'),
-                             Functor(lambda C4, X5: pyro.sample("C5", dist.Normal(C4+0.001*X5, 0.1)), 'C5'),
+                             Functor(lambda C3: pyro.sample("C4", dist.Normal(C3 + 0.001, 0.1)), 'C4'),
+                             Functor(lambda C4, X5, X4, X3, X6, X7, X8, X9, X10, X11, X12: pyro.sample("C5",
+                                                                                dist.Normal(C4 + 0.001 * np.mean(
+                                                                                    [X12, X11, X10, X9, X8, X7, X6, X5, X4, X3]),
+                                                                                            0.1)), 'C5'),
                              Functor(lambda C5: pyro.sample("C6", dist.Normal(C5, 0.1)), 'C6'),
                              Functor(lambda C, X1, C6, U2: pyro.sample("X2", dist.Normal(
                                  (C + C6) / 2 + X1 + torch.abs(U2) * 0.3,
@@ -118,10 +215,19 @@ fcm = FunctionalCausalModel({Functor(lambda: pyro.sample("C0", dist.Normal(0, 0.
                                      "Y")}, latent_over_pomps_example)
 
 domain = [RealDomain("X1", -2, 2), RealDomain("X2", -2, 2), RealDomain("X3", -1, 1), RealDomain("X4", -1, 1),
-          RealDomain("X5", -1, 1), RealDomain("C", -2, 2), RealDomain("C0", -2.2, 2.2),
-          RealDomain("C2", -2.4, 2.4), RealDomain("C3", -2.6, 2.6), RealDomain("C4", -2.8, 2.8),
-          RealDomain("C5", -3, 3),
-          RealDomain("C6", -3.2, 3.2)]
+          RealDomain("X5", -1, 1), RealDomain("X6", -1, 1), RealDomain("X7", -1, 1), RealDomain("X8", -1, 1),
+          RealDomain("X9", -1, 1), RealDomain("X10", -1, 1), RealDomain("X11", -1, 1), RealDomain("X12", -1, 1),
+          RealDomain("C", -2, 2),
+          RealDomain("C0", -2.2, 2.2),  RealDomain("C2", -2.4, 2.4), RealDomain("C3", -2.6, 2.6),
+          RealDomain("C4", -2.8, 2.8), RealDomain("C5", -3, 3), RealDomain("Ct0", -1, 1), RealDomain("Ct1", -1, 1),
+          RealDomain("Ct2", -1, 1), RealDomain("Ct3", -1, 1), RealDomain("Ct4", -1, 1), RealDomain("C6", -3.2, 3.2),
+          RealDomain("Ctt0", -1, 1), RealDomain("Ctt1", -1, 1),
+          RealDomain("Ctt2", -1, 1), RealDomain("Ctt3", -1, 1), RealDomain("Ctt4", -1, 1),
+          RealDomain("Cttt0", -1, 1), RealDomain("Cttt1", -1, 1),
+          RealDomain("Cttt2", -1, 1), RealDomain("Cttt3", -1, 1), RealDomain("Cttt4", -1, 1),
+          RealDomain("Ctttt0", -1, 1), RealDomain("Ctttt1", -1, 1),
+          RealDomain("Ctttt2", -1, 1), RealDomain("Ctttt3", -1, 1), RealDomain("Ctttt4", -1, 1)
+          ]
 
 pomps_example_hard_for_contextual = SCMOptimizer(fcm, domain)
 # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -139,13 +245,13 @@ pomps_both_optimal_example = SCMOptimizer(fcm, domain)
 fcm = FunctionalCausalModel({Functor(lambda U1: pyro.sample("C", dist.Delta(U1)), 'C'),
                              Functor(lambda U1: pyro.sample("X1", dist.Delta(U1)), 'X1'),
                              Functor(
-                                 lambda C, X1, U2: pyro.sample("X2", dist.Delta(U2*torch.exp(-(X1+C)*(X1+C)))),
+                                 lambda C, X1, U2: pyro.sample("X2", dist.Delta(U2 * torch.exp(-(X1 + C) * (X1 + C)))),
                                  'X2'),
                              Functor(lambda U2, X2, C: pyro.sample("Y",
-                                                                   dist.Delta(U2*X2+0.01*C)),
+                                                                   dist.Delta(U2 * X2 + 0.01 * C)),
                                      "Y")}, latent_over_pomps_example)
 
 domain = [RealDomain("X1", -1, 1), RealDomain("X2", -2, 2), RealDomain("C", -1, 1)]
 
-impossible_for_contextual_bo = SCMOptimizer(fcm,  domain)
+impossible_for_contextual_bo = SCMOptimizer(fcm, domain)
 # ------------------------------------------------------------------------------------------------------------------------------------------------
