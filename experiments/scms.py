@@ -91,10 +91,10 @@ def latent_over_pomps_example():
 fcm = FunctionalCausalModel({Functor(lambda U1: pyro.sample("C", dist.Normal(U1, 0.1)), 'C'),
                              Functor(lambda U1: pyro.sample("X1", dist.Normal(U1, 0.1)), 'X1'),
                              Functor(
-                                     lambda C, X1, U2: pyro.sample("X2", dist.Normal(torch.abs(C - X1) + 0.2, 0.1)),
+                                     lambda C, X1, U2: pyro.sample("X2", dist.Delta(torch.abs(C - X1) + 0.2*U2)),
                                  'X2'),
                              Functor(lambda U2, X2, C: pyro.sample("Y",
-                                                                   dist.Normal(torch.cos(C - X2) + U2 / 100, 0.001)),
+                                                                   dist.Normal(torch.cos(C - X2) + U2 / 10, 0.01)),
                                      "Y")}, latent_over_pomps_example)
 
 domain = [RealDomain("X1", -2, 2), RealDomain("X2", -2, 2), RealDomain("C", -2, 2)]
