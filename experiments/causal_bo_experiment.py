@@ -1,6 +1,7 @@
 from experiments.pomps_experiment import *
 from pomis.graphs import *
 from npsem.where_do import POMISs
+from pomps.hebo_adapted import CustomEI
 from pomps.policy_scope import PolicyComponent
 
 
@@ -38,7 +39,7 @@ class CaBOExperiment(Experiment):
         assert {s.name for s in optimization_domain}.issuperset(interventional_variables), \
             "Interventional optimization domain is incomplete"
         self.graphs_under_policies = [(MPSDAGController.graph_under_mps(mps, self.ccg), mps) for mps in mps_cmp]
-        self.factory = GPFunctorFactory(optimization_domain)
+        self.factory = GPFunctorFactory(optimization_domain, acq_function=CustomEI)
 
     @classmethod
     def __convert_pomis_to_mps(cls, pomis_s: tp.FrozenSet[tp.FrozenSet[str]]) -> tp.List[MixedPolicyScope]:
@@ -51,7 +52,7 @@ class CaBOExperiment(Experiment):
         return mps
 
     def step(self):
-        y, policy, smp, mps = super().step()
+        y, policy, smp, mps, trial_id = super().step()
         policy.functional.observe(self._opt_factor*y)
 
         self.log_results(smp, mps)

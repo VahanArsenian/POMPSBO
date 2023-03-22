@@ -1,3 +1,5 @@
+import numpy as np
+
 from pomps.fcm import FunctionalCausalModel
 from pomis.scm import Domain, RealDomain
 import pyro
@@ -62,8 +64,8 @@ fcm = FunctionalCausalModel({Functor(lambda: pyro.sample("age", dist.Uniform(55,
                              Functor(lambda age, bmi, statin, aspirin: pyro.sample("cancer",
                                                                                    dist.Delta(
                                                                                        statin * statin + torch.square((
-                                                                                        (
-                                                                                         age - 55) / 21) * torch.abs(
+                                                                                                                              (
+                                                                                                                                      age - 55) / 21) * torch.abs(
                                                                                            (
                                                                                                    bmi - 27) / 4)) + 0.5 * aspirin * aspirin
                                                                                    )),
@@ -89,35 +91,48 @@ def latent_over_pomps_example():
 fcm = FunctionalCausalModel({Functor(lambda U1: pyro.sample("C", dist.Normal(U1, 0.1)), 'C'),
                              Functor(lambda U1: pyro.sample("X1", dist.Normal(U1, 0.1)), 'X1'),
                              Functor(
-                                 lambda C, X1, U2: pyro.sample("X2", dist.Normal(torch.abs(C - X1) + 0.2, 0.1)),
+                                     lambda C, X1, U2: pyro.sample("X2", dist.Delta(torch.abs(C - X1) + 0.2*U2)),
                                  'X2'),
                              Functor(lambda U2, X2, C: pyro.sample("Y",
-                                                                   dist.Normal(torch.cos(C - X2) + U2 / 100, 0.001)),
+                                                                   dist.Normal(torch.cos(C - X2) + U2 / 10, 0.01)),
                                      "Y")}, latent_over_pomps_example)
 
 domain = [RealDomain("X1", -2, 2), RealDomain("X2", -2, 2), RealDomain("C", -2, 2)]
 
 pomps_example = SCMOptimizer(fcm, domain)
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-fcm = FunctionalCausalModel({Functor(lambda: pyro.sample("C0", dist.Normal(0, 0.2)), 'C0'),
-                             Functor(lambda U1, C0: pyro.sample("C", dist.Normal(C0 - U1, 0.1)), 'C'),
-                             Functor(lambda U1: pyro.sample("X1", dist.Normal(U1, 0.1)), 'X1'),
-                             Functor(lambda C: pyro.sample("C2", dist.Normal(C, 0.1)), 'C2'),
-                             Functor(lambda C2: pyro.sample("C3", dist.Normal(C2, 0.1)), 'C3'),
-                             Functor(lambda C3: pyro.sample("C4", dist.Normal(C3, 0.1)), 'C4'),
-                             Functor(lambda C4: pyro.sample("C5", dist.Normal(C4, 0.1)), 'C5'),
-                             Functor(lambda C5: pyro.sample("C6", dist.Normal(C5, 0.1)), 'C6'),
-                             Functor(lambda C, X1, C6, U2: pyro.sample("X2", dist.Normal(
-                                 (C + C6) / 2 + X1 + torch.abs(U2) * 0.3,
-                                 0.1)), 'X2'),
-                             Functor(lambda U2, X2, C: pyro.sample("Y",
-                                                                   dist.Normal(torch.cos(C - X2) + U2 / 100, 0.01)),
-                                     "Y")}, latent_over_pomps_example)
+components = [Functor(lambda: pyro.sample("C0", dist.Normal(0, 0.2)), 'C0'),
+              Functor(lambda U1, C0: pyro.sample("C1", dist.Normal(C0 - U1, 0.1)), 'C1'),
+              Functor(lambda U1: pyro.sample("X1", dist.Normal(U1, 0.1)), 'X1'),
 
-domain = [RealDomain("X1", -2, 2), RealDomain("X2", -2, 2), RealDomain("C", -2, 2), RealDomain("C0", -2.2, 2.2),
-          RealDomain("C2", -2.4, 2.4), RealDomain("C3", -2.6, 2.6), RealDomain("C4", -2.8, 2.8),
-          RealDomain("C5", -3, 3),
-          RealDomain("C6", -3.2, 3.2)]
+              Functor(lambda C1: pyro.sample("C2", dist.Normal(C1, 0.1)), 'C2'),
+              Functor(lambda C2: pyro.sample("C3", dist.Normal(C2, 0.1)), 'C3'),
+              Functor(lambda C3: pyro.sample("C4", dist.Normal(C3, 0.1)), 'C4'),
+              Functor(lambda C5: pyro.sample("C6", dist.Normal(C5, 0.1)), 'C6'),
+              Functor(lambda C1, X1, C6, U2: pyro.sample("X2", dist.Normal(
+                  (C1 + C6) / 2 + X1 + torch.abs(U2) * 0.3,
+                  0.1)), 'X2'),
+              Functor(lambda U2, X2, C1: pyro.sample("Y",
+                                                    dist.Normal(torch.cos(C1 - X2) + U2 / 100, 0.01)),
+                      "Y")
+              ]
+n_inter = 27
+n_context = 50
+for i in range(n_context):
+    components.append(Functor(lambda: pyro.sample(f"Ct{i}", dist.Normal(0, 0.2)), f'Ct{i}'))
+for i in range(n_inter):
+    cc = [c.variable for c in components]
+    fn_ = f"""Functor(lambda {", ".join([f"Ct{i}" for i in range(n_context)])}: pyro.sample("Xt{i}", dist.Uniform(-1, 1+0.01*np.mean([{", ".join([f"Ct{i}" for i in range(n_context)])}]))), "Xt{i}")"""
+    components.append(eval(fn_))
+
+fn_ = f"""Functor(lambda C4, {", ".join([f"Xt{i}" for i in range(n_inter)])}: pyro.sample("C5", 
+dist.Normal(C4+0.001*np.mean([{", ".join([f"Xt{i}" for i in range(n_inter)])}]), 0.1)), 'C5')"""
+components.append(eval(fn_))
+
+fcm = FunctionalCausalModel(set(components), latent_over_pomps_example)
+
+domain = [RealDomain("X1", -2, 2), RealDomain("X2", -2, 2)] + [RealDomain(f"Xt{i}", -1, 1) for i in range(n_inter)] +\
+         [RealDomain(f'Ct{i}', -1, 1) for i in range(n_context)] + [RealDomain(f'C{i}', -2, 2) for i in range(7)]
 
 pomps_example_hard_for_contextual = SCMOptimizer(fcm, domain)
 # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -135,13 +150,13 @@ pomps_both_optimal_example = SCMOptimizer(fcm, domain)
 fcm = FunctionalCausalModel({Functor(lambda U1: pyro.sample("C", dist.Delta(U1)), 'C'),
                              Functor(lambda U1: pyro.sample("X1", dist.Delta(U1)), 'X1'),
                              Functor(
-                                 lambda C, X1, U2: pyro.sample("X2", dist.Delta(U2*torch.exp(-(X1+C)*(X1+C)))),
+                                 lambda C, X1, U2: pyro.sample("X2", dist.Delta(U2 * torch.exp(-(X1 + C) * (X1 + C)))),
                                  'X2'),
                              Functor(lambda U2, X2, C: pyro.sample("Y",
-                                                                   dist.Delta(U2*X2+0.01*C)),
+                                                                   dist.Delta(U2 * X2 + 0.01 * C)),
                                      "Y")}, latent_over_pomps_example)
 
 domain = [RealDomain("X1", -1, 1), RealDomain("X2", -2, 2), RealDomain("C", -1, 1)]
 
-impossible_for_contextual_bo = SCMOptimizer(fcm,  domain)
+impossible_for_contextual_bo = SCMOptimizer(fcm, domain)
 # ------------------------------------------------------------------------------------------------------------------------------------------------
