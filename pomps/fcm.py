@@ -70,10 +70,12 @@ class FunctionalCausalModel:
     def is_acyclic(self):
         return is_directed_acyclic_graph(self.induced_graph())
 
-    def sample(self, necessary_context: tp.Set[str] = None, return_exog=False):
+    def sample(self, necessary_context: tp.Set[str] = None, return_exog=False,
+               exogenous: dict = None):
         sorted_nodes = self.induced_graph().topological_order(necessary_context)
         # TODO: MB cache the order
-        exogenous = self.prob_over_exogenous()
+        if exogenous is None:
+            exogenous = self.prob_over_exogenous()
         observed = {}
         for n in sorted_nodes:
             if n in observed:

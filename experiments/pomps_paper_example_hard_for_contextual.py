@@ -20,7 +20,7 @@ if __name__ == "__main__":
     torch.manual_seed(seed)
     experiment_name = "pomps_paper_graph0_hard_for_contextual"
 
-    exp = POMPSExperiment(environ.fcm, {"X1", "X2"}, {"C", "C2", 'C3', 'C0', "C4", 'C5', 'C6'}, environ.domain,
+    exp = POMPSExperiment(environ.fcm, {"X1", "X2"}, {"C1", 'C6'}, environ.domain,
                           "Y", [MixedPolicyScope(set())], debug=smoke_test,
                           n_iter=16 if smoke_test else n_iter, experiment_name=experiment_name)
 

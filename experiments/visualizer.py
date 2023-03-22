@@ -6,6 +6,7 @@ import typing as tp
 from experiments.pomps_experiment import OptimizationObjective
 from pathlib import Path
 import matplotlib.pyplot as plt
+
 sns.set_theme()
 
 
@@ -25,8 +26,13 @@ class Visualizer:
         self.max_expected_reward = max_expected_reward
         self.files = [f for f in os.listdir(str(self.directory_path)) if f.startswith(self.experiment_name)]
         self.combined_df = pd.concat(list(self.results_iterator()))
-        self.policy_freq = self.combined_df[["MPS", "index"]].groupby('index').MPS.value_counts(normalize=True)\
+        self.policy_freq = self.combined_df[["MPS", "index"]].groupby('index').MPS.value_counts(normalize=True) \
             .reset_index(name='freq')
+        self.cum_prob = self.combined_df.sort_values("index")[['EXP_ID', "index", "MPS"]] \
+            .pivot(values='MPS', columns='MPS', index=['EXP_ID', 'index']).fillna(
+            "-").applymap(lambda x: 0 if x == '-' else 1).groupby(level=[0]).cumsum().reset_index()
+        for s in self.combined_df.MPS.unique():
+            self.cum_prob[s] = self.cum_prob[s] / (self.cum_prob['index'] + 1)
 
     def load(self, file_name):
         fn = str(self.directory_path.joinpath(file_name))
@@ -42,29 +48,42 @@ class Visualizer:
             df['EXP_ID'] = idx
             df['Regret'] = -self.objective.coefficient() * (self.max_expected_reward - df['Y'])
             df['Cum_Regret'] = df['Regret'].cumsum()
+            df['Cum_Regret_Norm'] = df['Cum_Regret'] / (df['index']+1)
             yield df
 
     def plot_pomps_frequency(self, c=None):
         return sns.lineplot(data=self.policy_freq, x='index',
                             y='freq', hue='MPS').set(title="MPS Frequency")
 
-    def plot_target(self, central_tendency='median', uncertainty=('pi', 50), c=None):
+    def plot_target(self, c=None):
         return sns.lineplot(data=self.combined_df, x='index', y='Y',
-                            estimator=central_tendency, errorbar=uncertainty,
+                            estimator=self.central_tendency, errorbar=self.uncertainty,
                             label=self.experiment_name).set(title="Target")
 
-    def plot_regret(self, central_tendency='median', uncertainty=('pi', 50), c=None):
+    def plot_regret(self, c=None):
         return sns.lineplot(data=self.combined_df, x='index', y='Regret',
-                            estimator=central_tendency, errorbar=uncertainty,
+                            estimator=self.central_tendency, errorbar=self.uncertainty,
                             label=self.experiment_name).set(title="Regret")
 
-    def plot_cumulative_regret(self, central_tendency='median', uncertainty=('pi', 50), c=None):
+    def plot_cumulative_regret(self, c=None):
         return sns.lineplot(data=self.combined_df, x='index', y='Cum_Regret',
-                            estimator=central_tendency, errorbar=uncertainty,
+                            estimator=self.central_tendency, errorbar=self.uncertainty,
                             label=self.experiment_name).set(title="Cumulative Regret")
 
+    def plot_cumulative_regret_norm(self, c=None):
+        return sns.lineplot(data=self.combined_df, x='index', y='Cum_Regret_Norm',
+                            estimator=self.central_tendency, errorbar=self.uncertainty,
+                            label=self.experiment_name).set(title="Cumulative Regret / t")
+
+    def plot_cumulative_frequency(self, c=None):
+        for s in self.combined_df.MPS.unique():
+            sns.lineplot(data=self.cum_prob, x='index', y=s,
+                         estimator=self.central_tendency, errorbar=self.uncertainty,
+                         label=s).set(title="Cumulative Frequency")
+
     def _plot(self):
-        return [self.plot_pomps_frequency, self.plot_target, self.plot_regret, self.plot_cumulative_regret]
+        return [self.plot_pomps_frequency, self.plot_target, self.plot_regret,
+                self.plot_cumulative_regret, self.plot_cumulative_regret_norm, self.plot_cumulative_frequency]
 
     def summary(self):
         for pl in self._plot():

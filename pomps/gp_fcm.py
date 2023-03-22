@@ -1,6 +1,6 @@
 import numpy as np
 
-from pomps.hebo_adapted import AdHEBO, HEBO
+from pomps.hebo_adapted import AdHEBO, HEBO, ReducedMACE
 import pandas as pd
 import typing as tp
 from pomps.fcm import Functor
@@ -75,8 +75,9 @@ class SharedFunctor(GPFunctor):
 
 class GPFunctorFactory:
 
-    def __init__(self, domains: tp.List[Domain]):
+    def __init__(self, domains: tp.List[Domain], acq_function=ReducedMACE):
         self.domains: tp.Dict[str, Domain] = {dom.name: dom for dom in domains}
+        self.acq_func = acq_function
 
     def get_domain_for(self, variables: tp.Set[str]) -> tp.List[Domain]:
         return [v for k, v in self.domains.items() if k in variables]
@@ -95,7 +96,7 @@ class GPFunctorFactory:
         domain = self.get_domain_for(set(variables) | union(arguments))
         hebo_space = [d.to_hebo() for d in domain]
         ds = DesignSpace().parse(hebo_space)
-        hebo = GPFunctional(AdHEBO(ds))
+        hebo = GPFunctional(AdHEBO(ds, acq_cls=self.acq_func))
         functional = [SharedFunctor(hebo, v, c) for v, c in zip(variables, arguments)]
         [buffer.register(f) for f in functional]
         return functional
