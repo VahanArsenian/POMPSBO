@@ -158,7 +158,7 @@ class AdHEBO(HEBO):
             sig = Sigma(model, linear_a=-1.)
             opt = EvolutionOpt(self.space, acq, pop=100, iters=100, verbose=False, es=self.es)
             rec = opt.optimize(initial_suggest=best_x, fix_input=fix_input)
-            # acq_col_name = "__AC_VAL"
+            acq_col_name = "__AC_VAL"
             assert len(rec) == len(opt.res.F)
 
             print(opt.res.F)
@@ -179,12 +179,10 @@ class AdHEBO(HEBO):
                 rand_rec = self.quasi_sample(n_suggestions - rec.shape[0], fix_input)
                 rec = rec.append(rand_rec, ignore_index=True)
 
-
-
             select_id = np.random.choice(rec.shape[0], n_suggestions, replace=False).tolist()
             # x_guess = []
             # acq_vals = rec[acq_col_name].to_list()
-            # rec = rec.drop(columns=[acq_col_name])
+            rec = rec.drop(columns=[acq_col_name])
             x, xe = self.space.transform(rec)
             acq_vals = acq(x, xe).detach().cpu().numpy()
             with torch.no_grad():
