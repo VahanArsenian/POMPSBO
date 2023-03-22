@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from pomps.fcm import FunctionalCausalModel, ContextualCausalGraph
 from pomps.controllers import GPFunctorFactory, MixedPolicyScope, get_mps_for, PolicyFCM, \
     MPSDAGController, PolicyComponent
-from pomps.hebo_adapted import ReducedMACE, CustomEI
+from pomps.hebo_adapted import ReducedMACE, CustomEI, LCB
 from pomis.scm import Domain
 from pomps.utils import pareto_optimal, union
 import numpy as np
@@ -185,7 +185,7 @@ class POMPSExperiment(Experiment):
             "Contextual optimization domain is incomplete"
         assert {s.name for s in optimization_domain}.issuperset(interventional_variables), \
             "Interventional optimization domain is incomplete"
-        self.factory = GPFunctorFactory(optimization_domain, acq_function=ReducedMACE)
+        self.factory = GPFunctorFactory(optimization_domain, acq_function=LCB)
         simplified = MPSDAGController.simplify(self.ccg)
         self.graphs_under_policies = get_mps_for(simplified)
 
