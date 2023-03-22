@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from hebo.optimizers.hebo import HEBO, MACE, Mean, Sigma, power_transform, get_model, EvolutionOpt
 from hebo.acquisitions.acq import SingleObjectiveAcq, BaseModel, Tensor, Normal
 from hebo.acquisitions.acq import EI, LCB
@@ -76,12 +78,47 @@ class ReducedMACE(MACE):
 
 class AdHEBO(HEBO):
 
+    @property
+    def model_config(self):
+        if self._model_config is None:
+            if self.model_name == 'gp':
+                cfg = {
+                    'lr': 0.01,
+                    'num_epochs': 100,
+                    'verbose': False,
+                    'noise_lb': 8e-4,
+                    'pred_likeli': False
+                }
+            elif self.model_name == 'gpy':
+                cfg = {
+                    'verbose': False,
+                    'warp': False,
+                    'space': self.space
+                }
+            elif self.model_name == 'gpy_mlp':
+                cfg = {
+                    'verbose': False
+                }
+            elif self.model_name == 'rf':
+                cfg = {
+                    'n_estimators': 20
+                }
+            else:
+                cfg = {}
+        else:
+            cfg = deepcopy(self._model_config)
+
+        if self.space.num_categorical > 0:
+            cfg['num_uniqs'] = [len(self.space.paras[name].categories) for name in self.space.enum_names]
+        return cfg
+
     def __init__(self, space, model_name='gpy',
-                 rand_sample=None, acq_cls=None, es='nsga2', model_config=None):
-        if acq_cls is None:
-            acq_cls = ReducedMACE
+
+                 rand_sample=None, acq_cls=LCB, es=None, model_config=None):
+
         super().__init__(space, model_name=model_name,
                          rand_sample=rand_sample, acq_cls=acq_cls, es=es, model_config=model_config)
+        print(self.model_config)
         self.__model = None
 
     def suggest(self, n_suggestions=1, fix_input=None):
@@ -92,33 +129,15 @@ class AdHEBO(HEBO):
             return sample, None
         else:
             X, Xe = self.space.transform(self.X)
-            try:
-                if self.y.min() <= 0:
-                    y = torch.FloatTensor(power_transform(self.y / self.y.std(), method='yeo-johnson'))
-                else:
-                    y = torch.FloatTensor(power_transform(self.y / self.y.std(), method='box-cox'))
-                    if y.std() < 0.5:
-                        y = torch.FloatTensor(power_transform(self.y / self.y.std(), method='yeo-johnson'))
-                if y.std() < 0.5:
-                    raise RuntimeError('Power transformation failed')
-                if self.__model is None:
-                    model = get_model(self.model_name, self.space.num_numeric, self.space.num_categorical, 1,
-                                      **self.model_config)
-                    # print("fitting GP")
-                    model.fit(X, Xe, y)
-                    self.__model = model
-                else:
-                    model = self.__model
-            except:
-                y = torch.FloatTensor(self.y).clone()
-                if self.__model is None:
-                    model = get_model(self.model_name, self.space.num_numeric, self.space.num_categorical, 1,
-                                      **self.model_config)
-                    # print("fitting GP")
-                    model.fit(X, Xe, y)
-                    self.__model = model
-                else:
-                    model = self.__model
+            y = torch.FloatTensor(self.y).clone()
+            if self.__model is None:
+                model = get_model(self.model_name, self.space.num_numeric, self.space.num_categorical, 1,
+                                  **self.model_config)
+                # print("fitting GP")
+                model.fit(X, Xe, y)
+                self.__model = model
+            else:
+                model = self.__model
 
             best_id = self.get_best_id(fix_input)
             best_x = self.X.iloc[[best_id]]
@@ -141,12 +160,9 @@ class AdHEBO(HEBO):
             rec = opt.optimize(initial_suggest=best_x, fix_input=fix_input)
             # acq_col_name = "__AC_VAL"
             assert len(rec) == len(opt.res.F)
-            # print(opt.res.F)
-            # try:
-            #     rec['__AC_VAL'] = list(map(list, opt.res.F))
-            # except TypeError as _:
-            #     rec['__AC_VAL'] = list(map(lambda x: [x], opt.res.F))
-            # print(rec)
+
+            print(opt.res.F)
+            rec['__AC_VAL'] = opt.res.F
             rec = rec[self.check_unique(rec)]
 
             cnt = 0
@@ -172,14 +188,6 @@ class AdHEBO(HEBO):
             x, xe = self.space.transform(rec)
             acq_vals = acq(x, xe).detach().cpu().numpy()
             with torch.no_grad():
-                py_all = mu(*self.space.transform(rec)).squeeze().numpy()
-                ps_all = -1 * sig(*self.space.transform(rec)).squeeze().numpy()
-                best_pred_id = np.argmin(py_all)
-                best_unce_id = np.argmax(ps_all)
-                if best_unce_id not in select_id and n_suggestions > 2:
-                    select_id[0] = best_unce_id
-                if best_pred_id not in select_id and n_suggestions > 2:
-                    select_id[1] = best_pred_id
                 rec_selected = rec.iloc[select_id].copy()
                 acq_opt = -np.array(acq_vals)[select_id]
             return rec_selected, acq_opt
