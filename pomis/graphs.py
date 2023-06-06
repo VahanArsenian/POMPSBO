@@ -70,7 +70,7 @@ class NonManGraph(nx.DiGraph):
 
                     if c1 and c2:
                         projected_confounded_pair = sorted([v1, v2])
-                        projected_latent_name = f"u-{projected_confounded_pair[0]}-{projected_confounded_pair[1]}"
+                        projected_latent_name = f"U-{projected_confounded_pair[0]}-{projected_confounded_pair[1]}"
 
                         confounding_variables |= {projected_latent_name}
                         confounded_triplets |= {(*projected_confounded_pair, projected_latent_name)}
