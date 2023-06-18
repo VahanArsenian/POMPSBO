@@ -61,7 +61,6 @@ class SharedFunctor(GPFunctor):
         self.hyper_space = self.arguments
         self.arguments = arguments
         self.sf = sfb
-        self.acq_vals = None
 
     def __call__(self, payload: tp.Dict[str, tp.Any]):
         # print("buffer", self.sf.buffer)
@@ -69,7 +68,8 @@ class SharedFunctor(GPFunctor):
             assert set(payload.keys()).issuperset(self.arguments), "Signature mismatch"
             active_payload = {k: v for k, v in payload.items() if k in self.arguments}
             # print(active_payload, payload, self.hyper_space, self.arguments, self.variable)
-            self.sf.buffer, self.acq_vals = self.functional(**active_payload)
+            self.sf.buffer, _ = self.functional(**active_payload)
+        self.acq_vals = self.functional.acq_vals
         return self.sf.buffer.pop(self.variable)
 
 

@@ -85,6 +85,6 @@ class CausalGraph(npsem.model.CausalDiagram):
     def __init__(self, projection: Projection):
         nodes = set(projection.nodes) - projection.confounding_variables
         directed = [(v1, v2) for v1, v2 in projection.edges if len({v1, v2} & projection.confounding_variables) == 0]
-        bi_directed = [(v1, v2, f"u_{i}") for i, (v1, v2, _) in enumerate(projection.confounded_triplets)]
+        bi_directed = [(v1, v2, f"U_{i}") for i, (v1, v2, _) in enumerate(projection.confounded_triplets)]
         super(CausalGraph, self).__init__(nodes, directed, bi_directed)
 
