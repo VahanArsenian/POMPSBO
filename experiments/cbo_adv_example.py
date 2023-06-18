@@ -24,7 +24,7 @@ if __name__ == "__main__":
                                        'connection_type', 'SK', 'installs', 'category', 'impressions', 'bid_price',
                                        'purchases', 'user_profile', 'exchange'},
                          environ.domain, "revenue", n_iter=16 if smoke_test else n_iter,
-                         experiment_name=experiment_name, objetive=OptimizationObjective.minimize)
+                         experiment_name=experiment_name, objetive=OptimizationObjective.maximize)
 
     exp.iterate({"smoke_test": smoke_test, "seed": seed}, smoke_test=smoke_test)
     end = datetime.datetime.now()
