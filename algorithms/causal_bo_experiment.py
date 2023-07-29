@@ -1,4 +1,4 @@
-from experiments.pomps_experiment import *
+from algorithms.pomps_experiment import *
 from pomis.graphs import *
 from npsem.where_do import POMISs
 from pomps.hebo_adapted import CustomEI

@@ -3,7 +3,7 @@ import pickle
 import pandas as pd
 import seaborn as sns
 import typing as tp
-from experiments.pomps_experiment import OptimizationObjective
+from algorithms.pomps_experiment import OptimizationObjective
 from pathlib import Path
 import matplotlib.pyplot as plt
 

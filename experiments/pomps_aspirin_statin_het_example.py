@@ -5,7 +5,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from experiments.scms import aspirin_statin_het_broader as environ
 import datetime
 import torch
-from experiments.pomps_experiment import POMPSExperiment, OptimizationObjective
+from algorithms.pomps_experiment import POMPSExperiment, OptimizationObjective
 from pomps.policy_scope import PolicyComponent, MixedPolicyScope
 import numpy as np
 import random

@@ -5,7 +5,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from experiments.scms import pomps_both_optimal_example as environ
 import datetime
 import torch
-from experiments.pomps_experiment import POMPSExperiment, MixedPolicyScope
+from algorithms.pomps_experiment import POMPSExperiment, MixedPolicyScope
 import numpy as np
 import random
 
