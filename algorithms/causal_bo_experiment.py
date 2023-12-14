@@ -1,4 +1,4 @@
-from experiments.pomps_experiment import *
+from algorithms.pomps_experiment import *
 from pomis.graphs import *
 from npsem.where_do import POMISs
 from pomps.hebo_adapted import CustomEI
@@ -27,7 +27,7 @@ class CaBOExperiment(Experiment):
         nmg.add_edges_from(induced.edges)
         pomis_s = POMISs(CausalGraph(nmg.projection), target)
 
-        interventional_variables = set(induced.nodes) - non_interventional_variables - set(target)
+        interventional_variables = set(induced.nodes) - non_interventional_variables - {target}
 
         self.__contains_empty = set() in pomis_s
         if self.__contains_empty:
@@ -37,7 +37,7 @@ class CaBOExperiment(Experiment):
         self.ccg = ContextualCausalGraph(edges=induced, interventional_variables=interventional_variables,
                                          contextual_variables=set(), target=target)
         assert {s.name for s in optimization_domain}.issuperset(interventional_variables), \
-            "Interventional optimization domain is incomplete"
+            f"Interventional optimization domain is incomplete. Please add {interventional_variables-{s.name for s in optimization_domain}} "
         self.graphs_under_policies = [(MPSDAGController.graph_under_mps(mps, self.ccg), mps) for mps in mps_cmp]
         self.factory = GPFunctorFactory(optimization_domain, acq_function=CustomEI)
 

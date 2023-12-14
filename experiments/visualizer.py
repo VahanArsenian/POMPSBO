@@ -3,7 +3,7 @@ import pickle
 import pandas as pd
 import seaborn as sns
 import typing as tp
-from experiments.pomps_experiment import OptimizationObjective
+from algorithms.pomps_experiment import OptimizationObjective
 from pathlib import Path
 import matplotlib.pyplot as plt
 
@@ -13,8 +13,10 @@ sns.set_theme()
 class Visualizer:
 
     def __init__(self, root: str, experiment_name: str, objective: OptimizationObjective,
-                 max_expected_reward: float, exp_dir: str = None, uncertainty=('pi', 50), central_tendency="median"):
+                 max_expected_reward: float, exp_dir: str = None,
+                 uncertainty=('pi', 50), central_tendency="median", target: str = "Y"):
         self.root = Path(root)
+        self.target = target
         self.uncertainty = uncertainty
         self.central_tendency = central_tendency
         self.objective = objective
@@ -46,7 +48,7 @@ class Visualizer:
             df = pd.DataFrame(results).reset_index()
             df = df.sort_values("index")
             df['EXP_ID'] = idx
-            df['Regret'] = -self.objective.coefficient() * (self.max_expected_reward - df['Y'])
+            df['Regret'] = -self.objective.coefficient() * (self.max_expected_reward - df[self.target])
             df['Cum_Regret'] = df['Regret'].cumsum()
             df['Cum_Regret_Norm'] = df['Cum_Regret'] / (df['index']+1)
             yield df
@@ -56,7 +58,7 @@ class Visualizer:
                             y='freq', hue='MPS').set(title="MPS Frequency")
 
     def plot_target(self, c=None):
-        return sns.lineplot(data=self.combined_df, x='index', y='Y',
+        return sns.lineplot(data=self.combined_df, x='index', y=self.target,
                             estimator=self.central_tendency, errorbar=self.uncertainty,
                             label=self.experiment_name).set(title="Target")
 

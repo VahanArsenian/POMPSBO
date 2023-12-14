@@ -5,7 +5,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from experiments.scms import aspirin_statin_het as environ
 import datetime
 import torch
-from experiments.causal_bo_experiment import CaBOExperiment, OptimizationObjective
+from algorithms.causal_bo_experiment import CaBOExperiment, OptimizationObjective
 import numpy as np
 import random
 

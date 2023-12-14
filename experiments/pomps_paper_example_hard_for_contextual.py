@@ -5,7 +5,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from experiments.scms import pomps_example_hard_for_contextual as environ
 import datetime
 import torch
-from experiments.pomps_experiment import POMPSExperiment, MixedPolicyScope
+from algorithms.pomps_experiment import POMPSExperiment, MixedPolicyScope
 import numpy as np
 import random
 
